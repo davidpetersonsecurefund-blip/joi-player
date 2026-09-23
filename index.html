@@ -162,7 +162,7 @@
       padding: 6px 12px;
       border-radius: 6px;
       font-size: 0.85rem;
-      width: 260px;
+      width: 320px;
     }
 
     .url-input:focus {
@@ -197,10 +197,10 @@
       <button class="btn" id="audio-toggle" onclick="toggleHoverAudio()">Hover To Unmute</button>
     </div>
 
-    <!-- Direct URL Link Sync (No Cloud Storage Limits) -->
+    <!-- Batch Link Input -->
     <div class="group">
-      <input type="text" id="urlInput" class="url-input" placeholder="Paste direct .mp4 URL (e.g. Catbox link)...">
-      <button class="btn" style="background: var(--accent);" onclick="addDirectUrl()">+ Add URL</button>
+      <input type="text" id="urlInput" class="url-input" placeholder="Paste direct links or Google Drive URLs (comma separated)...">
+      <button class="btn" style="background: var(--accent);" onclick="addDirectUrls()">+ Add Links</button>
       <button class="btn" style="border-color: #ff3355; color: #ff3355;" onclick="clearLibrary()">Clear Links</button>
     </div>
   </div>
@@ -240,6 +240,8 @@
     function buildGrid() {
       const wall = document.getElementById('video-wall');
       wall.innerHTML = '';
+
+      if (mediaList.length === 0) return;
 
       for (let i = 0; i < gridCount; i++) {
         const tile = document.createElement('div');
@@ -283,12 +285,33 @@
       btn.classList.toggle('active');
     }
 
-    async function addDirectUrl() {
-      const input = document.getElementById('urlInput');
-      const url = input.value.trim();
-      if (!url) return;
+    function parseDriveUrl(url) {
+      url = url.trim();
+      if (!url) return null;
 
-      mediaList.unshift(url);
+      // Extract Google Drive File ID if present
+      const driveMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
+      if (driveMatch && driveMatch[1]) {
+        return `https://drive.google.com/uc?export=download&id=${driveMatch[1]}`;
+      }
+      return url;
+    }
+
+    async function addDirectUrls() {
+      const input = document.getElementById('urlInput');
+      const rawText = input.value.trim();
+      if (!rawText) return;
+
+      // Split input by commas, spaces, or newlines
+      const extractedUrls = rawText
+        .split(/[\n,\s]+/)
+        .map(parseDriveUrl)
+        .filter(Boolean);
+
+      if (extractedUrls.length === 0) return;
+
+      // Unshift parsed URLs into active list
+      mediaList = [...extractedUrls, ...mediaList];
       input.value = '';
 
       try {
