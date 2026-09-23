@@ -120,7 +120,7 @@
       bottom: 0;
       left: 0;
       right: 0;
-      background: rgba(0, 0, 0, 0.9);
+      background: rgba(0, 0, 0, 0.92);
       backdrop-filter: blur(10px);
       padding: 12px 20px;
       display: flex;
@@ -163,6 +163,8 @@
       border-radius: 6px;
       font-size: 0.85rem;
       width: 320px;
+      height: 36px;
+      resize: none;
     }
 
     .url-input:focus {
@@ -197,10 +199,10 @@
       <button class="btn" id="audio-toggle" onclick="toggleHoverAudio()">Hover To Unmute</button>
     </div>
 
-    <!-- Batch Link Input -->
+    <!-- Smart Textarea Input -->
     <div class="group">
-      <input type="text" id="urlInput" class="url-input" placeholder="Paste direct links or Google Drive URLs (comma separated)...">
-      <button class="btn" style="background: var(--accent);" onclick="addDirectUrls()">+ Add Links</button>
+      <textarea id="urlInput" class="url-input" placeholder="Paste raw text, links, or Catbox page text here..."></textarea>
+      <button class="btn" style="background: var(--accent);" onclick="addDirectUrls()">+ Extract Links</button>
       <button class="btn" style="border-color: #ff3355; color: #ff3355;" onclick="clearLibrary()">Clear Links</button>
     </div>
   </div>
@@ -285,33 +287,27 @@
       btn.classList.toggle('active');
     }
 
-    function parseDriveUrl(url) {
-      url = url.trim();
-      if (!url) return null;
-
-      // Extract Google Drive File ID if present
-      const driveMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
-      if (driveMatch && driveMatch[1]) {
-        return `https://drive.google.com/uc?export=download&id=${driveMatch[1]}`;
-      }
-      return url;
-    }
-
     async function addDirectUrls() {
       const input = document.getElementById('urlInput');
       const rawText = input.value.trim();
       if (!rawText) return;
 
-      // Split input by commas, spaces, or newlines
-      const extractedUrls = rawText
-        .split(/[\n,\s]+/)
-        .map(parseDriveUrl)
-        .filter(Boolean);
+      // Extract all valid URLs (including Catbox links) from messy/raw text
+      const urlRegex = /(https?:\/\/[^\s"',]+)/g;
+      const matches = rawText.match(urlRegex) || [];
 
-      if (extractedUrls.length === 0) return;
+      const extractedUrls = matches
+        .map(url => url.replace(/;$/, '').trim())
+        .filter(url => url.includes('files.catbox.moe') || url.match(/\.(mp4|webm|mov)(\?.*)?$/i));
 
-      // Unshift parsed URLs into active list
-      mediaList = [...extractedUrls, ...mediaList];
+      if (extractedUrls.length === 0) {
+        alert("No valid video or Catbox links found in the text.");
+        return;
+      }
+
+      // Deduplicate and save
+      const uniqueUrls = [...new Set(extractedUrls)];
+      mediaList = [...uniqueUrls, ...mediaList];
       input.value = '';
 
       try {
