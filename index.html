@@ -114,13 +114,13 @@
       100% { opacity: 1; transform: scale(1.02); }
     }
 
-    /* Auto-Hiding Minimal Control Overlay */
+    /* Auto-Hiding Control Overlay */
     #control-bar {
       position: fixed;
       bottom: 0;
       left: 0;
       right: 0;
-      background: rgba(0, 0, 0, 0.85);
+      background: rgba(0, 0, 0, 0.9);
       backdrop-filter: blur(10px);
       padding: 12px 20px;
       display: flex;
@@ -133,7 +133,6 @@
       transition: opacity 0.3s ease;
     }
 
-    /* Reveal control bar on hover */
     #control-bar:hover, body.show-controls #control-bar {
       opacity: 1;
     }
@@ -148,10 +147,26 @@
       font-weight: bold;
       font-size: 0.85rem;
       transition: 0.2s;
+      white-space: nowrap;
     }
 
     .btn:hover, .btn.active {
       background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .url-input {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #fff;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      width: 260px;
+    }
+
+    .url-input:focus {
+      outline: none;
       border-color: var(--accent);
     }
 
@@ -161,48 +176,37 @@
 </head>
 <body>
 
-  <!-- Splash Screen to satisfy browser Autoplay/Audio Policies -->
   <div id="splash-screen" onclick="enterMatrix()">
     <h1>CLICK ANYWHERE TO ENTER</h1>
     <p style="color: #aaa;">Enables instant continuous playback & audio across all videos</p>
   </div>
 
-  <!-- Hypnotic Visual Effects Layer -->
   <div id="hypno-overlay"></div>
-
-  <!-- Multi-Video Grid -->
   <div id="video-wall" class="grid-9"></div>
 
-  <!-- Auto-Hiding Minimal Control Overlay -->
   <div id="control-bar">
     <div class="group">
-      <label>Grid Matrix:</label>
-      <button class="btn" onclick="setGrid(6)">6 Tiles</button>
-      <button class="btn active" onclick="setGrid(9)">9 Tiles</button>
-      <button class="btn" onclick="setGrid(12)">12 Tiles</button>
+      <label>Grid:</label>
+      <button class="btn" onclick="setGrid(6)">6</button>
+      <button class="btn active" onclick="setGrid(9)">9</button>
+      <button class="btn" onclick="setGrid(12)">12</button>
     </div>
 
     <div class="group">
-      <label>Hypnotic FX:</label>
       <button class="btn" id="fx-toggle" onclick="toggleFX()">Toggle Color Shifts</button>
-    </div>
-
-    <div class="group">
-      <label>Audio Focus:</label>
       <button class="btn" id="audio-toggle" onclick="toggleHoverAudio()">Hover To Unmute</button>
     </div>
 
+    <!-- Direct URL Link Sync (No Cloud Storage Limits) -->
     <div class="group">
-      <label class="btn" style="background: var(--accent); cursor: pointer;">
-        + Add Cloud Media
-        <input type="file" id="fileInput" accept="video/*" multiple style="display: none;">
-      </label>
+      <input type="text" id="urlInput" class="url-input" placeholder="Paste direct .mp4 URL (e.g. Catbox link)...">
+      <button class="btn" style="background: var(--accent);" onclick="addDirectUrl()">+ Add URL</button>
+      <button class="btn" style="border-color: #ff3355; color: #ff3355;" onclick="clearLibrary()">Clear Links</button>
     </div>
   </div>
 
   <script>
     let mediaList = [
-      // Sample public high-speed looping streams for instant testing
       "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
       "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
       "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
@@ -214,14 +218,11 @@
     let hoverAudioEnabled = true;
     let audioContextUnlocked = false;
 
-    // Load initial storage if available
     window.addEventListener('DOMContentLoaded', async () => {
       try {
-        let saved = await puter.kv.get('wall_media') || [];
+        let saved = await puter.kv.get('wall_urls') || [];
         if (saved.length > 0) mediaList = saved;
       } catch(e) {}
-
-      document.getElementById('fileInput').addEventListener('change', handleFileUpload);
     });
 
     function enterMatrix() {
@@ -232,8 +233,7 @@
 
     function setGrid(count) {
       gridCount = count;
-      const wall = document.getElementById('video-wall');
-      wall.className = `grid-${count}`;
+      document.getElementById('video-wall').className = `grid-${count}`;
       buildGrid();
     }
 
@@ -246,16 +246,12 @@
         tile.className = 'tile';
 
         const video = document.createElement('video');
-        // Pick a media source from list (or loop through array if smaller than grid)
         video.src = mediaList[i % mediaList.length];
         video.autoplay = true;
         video.loop = true;
         video.playsInline = true;
-        
-        // Muted initially so browser allows sync playback across 12 videos
         video.muted = true;
 
-        // Hover audio mechanics
         tile.addEventListener('mouseenter', () => {
           if (hoverAudioEnabled && audioContextUnlocked) {
             video.muted = false;
@@ -271,8 +267,6 @@
 
         tile.appendChild(video);
         wall.appendChild(tile);
-        
-        // Direct play call
         video.play().catch(() => {});
       }
     }
@@ -289,28 +283,30 @@
       btn.classList.toggle('active');
     }
 
-    async function handleFileUpload(e) {
-      const files = Array.from(e.target.files);
-      if (!files.length) return;
+    async function addDirectUrl() {
+      const input = document.getElementById('urlInput');
+      const url = input.value.trim();
+      if (!url) return;
 
-      for (let file of files) {
-        try {
-          const uploaded = await puter.fs.upload(file);
-          const url = await puter.fs.getReadURL(uploaded.path);
-          mediaList.unshift(url);
-        } catch(err) {
-          console.error("Upload error:", err);
-        }
-      }
+      mediaList.unshift(url);
+      input.value = '';
 
       try {
-        await puter.kv.set('wall_media', mediaList);
+        await puter.kv.set('wall_urls', mediaList);
       } catch(e) {}
 
       buildGrid();
     }
 
-    // Keep controls visible for 2 seconds when mouse moves
+    async function clearLibrary() {
+      if (!confirm("Reset playlist links?")) return;
+      mediaList = [];
+      try {
+        await puter.kv.del('wall_urls');
+      } catch(e) {}
+      buildGrid();
+    }
+
     let hideTimer;
     window.addEventListener('mousemove', () => {
       document.body.classList.add('show-controls');
