@@ -9,8 +9,8 @@
     :root {
       --bg: #000000;
       --accent: #9d4edd;
-      --accent-glow: rgba(157, 78, 221, 0.8);
-      --hue-speed: 8s;
+      --accent-glow: rgba(157, 78, 221, 0.6);
+      --hue-speed: 12s;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -45,8 +45,7 @@
       letter-spacing: 4px;
       margin-bottom: 15px;
       color: var(--accent);
-      text-shadow: 0 0 25px var(--accent-glow);
-      animation: pulse 2s infinite alternate;
+      text-shadow: 0 0 20px var(--accent-glow);
     }
 
     /* Multi-Video Grid Matrix Container */
@@ -79,7 +78,7 @@
     .grid-16 { grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(4, 1fr); }
     .grid-25 { grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(5, 1fr); }
     
-    /* Spotlight Layout (1 Main + 8 Minis) */
+    /* Spotlight Layout */
     .grid-spotlight {
       display: grid !important;
       grid-template-columns: 2fr repeat(2, 1fr) !important;
@@ -90,7 +89,6 @@
       grid-row: 1 / span 4;
     }
 
-    /* Mobile Portrait Layout Adjustments */
     @media (orientation: portrait) {
       .grid-6 { grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(3, 1fr); }
       .grid-12 { grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(4, 1fr); }
@@ -111,7 +109,8 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: transform 0.3s ease, filter 0.3s ease, border-color 0.3s ease;
+      transform: translateZ(0); /* Hardware Acceleration Hint */
+      will-change: transform;
       border: 1px solid transparent;
     }
 
@@ -120,25 +119,26 @@
       height: 100%;
       object-fit: cover;
       pointer-events: none;
+      transform: translateZ(0);
     }
 
     .tile.dimmed {
-      filter: brightness(0.2) grayscale(0.8);
+      opacity: 0.25;
     }
 
     .tile.active-roulette {
-      filter: brightness(1.2) contrast(1.1);
+      opacity: 1;
       border: 2px solid var(--accent);
-      box-shadow: inset 0 0 15px var(--accent-glow);
       z-index: 5;
     }
 
-    /* FX Overlay Layer System */
+    /* Hardware Accelerated Visual FX System */
     #fx-container {
       position: fixed;
       inset: 0;
       pointer-events: none;
       z-index: 10;
+      transform: translateZ(0);
     }
 
     .fx-scanlines {
@@ -147,23 +147,20 @@
     }
 
     .fx-vignette {
-      box-shadow: inset 0 0 100px rgba(0,0,0,0.95);
+      box-shadow: inset 0 0 80px rgba(0,0,0,0.85);
     }
 
     .fx-colorshift {
-      mix-blend-mode: overlay;
-      background: linear-gradient(45deg, #ff007f, #00f0ff, #7000ff, #ff0000);
-      background-size: 400% 400%;
-      animation: hueCycle var(--hue-speed) linear infinite, gradientMove 10s ease infinite;
-      opacity: 0.5;
+      background: linear-gradient(45deg, rgba(255,0,127,0.2), rgba(0,240,255,0.2), rgba(112,0,255,0.2));
+      animation: hueCycle var(--hue-speed) linear infinite;
     }
 
     .fx-flicker {
-      animation: crtFlicker 0.15s infinite;
+      animation: crtFlicker 0.2s infinite;
     }
 
     .fx-strobe {
-      animation: strobeFlash 0.8s infinite alternate;
+      animation: strobeFlash 1s infinite alternate;
     }
 
     @keyframes hueCycle {
@@ -171,40 +168,27 @@
       100% { filter: hue-rotate(360deg); }
     }
 
-    @keyframes gradientMove {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
-
     @keyframes crtFlicker {
-      0% { opacity: 0.97; }
-      50% { opacity: 1; }
-      100% { opacity: 0.94; }
+      0%, 100% { opacity: 0.98; }
+      50% { opacity: 0.93; }
     }
 
     @keyframes strobeFlash {
       0% { background: rgba(157, 78, 221, 0); }
-      100% { background: rgba(157, 78, 221, 0.15); }
+      100% { background: rgba(157, 78, 221, 0.12); }
     }
 
-    @keyframes pulse {
-      0% { opacity: 0.7; transform: scale(0.98); }
-      100% { opacity: 1; transform: scale(1.02); }
-    }
-
-    /* Scrollable Auto-Hiding Control Bar */
+    /* Control Bar Overlay */
     #control-bar-wrapper {
       position: fixed;
       bottom: 0;
       left: 0;
       right: 0;
       z-index: 100;
-      background: rgba(5, 5, 5, 0.92);
-      backdrop-filter: blur(12px);
+      background: rgba(10, 10, 10, 0.95);
       border-top: 1px solid rgba(255, 255, 255, 0.12);
       opacity: 0;
-      transition: opacity 0.3s ease, transform 0.3s ease;
+      transition: opacity 0.25s ease, transform 0.25s ease;
       transform: translateY(100%);
     }
 
@@ -220,8 +204,6 @@
       padding: 10px 15px;
       overflow-x: auto;
       white-space: nowrap;
-      scrollbar-width: thin;
-      scrollbar-color: var(--accent) transparent;
     }
 
     .group {
@@ -239,7 +221,6 @@
       font-weight: bold;
       text-transform: uppercase;
       color: #888;
-      margin-right: 2px;
     }
 
     .btn {
@@ -251,14 +232,12 @@
       cursor: pointer;
       font-weight: 600;
       font-size: 0.8rem;
-      transition: all 0.2s ease;
     }
 
     .btn:hover, .btn.active {
       background: var(--accent);
       border-color: var(--accent);
       color: #fff;
-      box-shadow: 0 0 10px var(--accent-glow);
     }
 
     .url-input {
@@ -273,18 +252,12 @@
       resize: none;
     }
 
-    .url-input:focus {
-      outline: none;
-      border-color: var(--accent);
-    }
-
     .slider {
       width: 80px;
       accent-color: var(--accent);
       cursor: pointer;
     }
 
-    /* Custom File Input Styling */
     .file-btn-wrapper {
       position: relative;
       overflow: hidden;
@@ -303,28 +276,26 @@
 </head>
 <body>
 
-  <!-- Entry Unlock Overlay -->
+  <!-- Entry Overlay -->
   <div id="splash-screen" onclick="enterMatrix()">
     <h1>CLICK ANYWHERE TO ENTER</h1>
-    <p style="color: #aaa;">Unlocks multi-video synchronized playback & ambient audio stream</p>
+    <p style="color: #aaa;">Unlocks multi-video matrix playback</p>
   </div>
 
-  <!-- Atmospheric Visual FX Stack -->
+  <!-- FX Container -->
   <div id="fx-container"></div>
 
-  <!-- Video Wall Grid Container -->
+  <!-- Matrix Grid Container -->
   <div id="matrix-container">
     <div id="video-wall" class="grid-9"></div>
   </div>
 
-  <!-- Background Audio Track Overlay -->
   <audio id="audio-overlay" loop></audio>
 
-  <!-- Auto-Hiding Control Bar -->
+  <!-- Auto-Hiding Bar -->
   <div id="control-bar-wrapper">
     <div id="control-bar">
       
-      <!-- Grid Layout Selector -->
       <div class="group">
         <span class="group-label">Grid</span>
         <button class="btn" onclick="setGrid(1)">1x1</button>
@@ -337,7 +308,6 @@
         <button class="btn" onclick="setGrid('spotlight')">1+8</button>
       </div>
 
-      <!-- Audio Mode Controls -->
       <div class="group">
         <span class="group-label">Audio</span>
         <button class="btn active" id="btn-audio-hover" onclick="setAudioMode('hover')">Hover Unmute</button>
@@ -345,7 +315,6 @@
         <button class="btn" id="btn-audio-mute" onclick="setAudioMode('mute')">Mute All</button>
       </div>
 
-      <!-- Audio Overlay (JOI / Music Track) -->
       <div class="group">
         <span class="group-label">Audio Overlay</span>
         <div class="file-btn-wrapper">
@@ -356,7 +325,6 @@
         <input type="range" id="audioVolume" class="slider" min="0" max="1" step="0.05" value="0.7" oninput="setOverlayVolume(this.value)">
       </div>
 
-      <!-- Visual FX Toggles -->
       <div class="group">
         <span class="group-label">Vibe FX</span>
         <button class="btn" onclick="toggleFX('fx-scanlines', this)">Scanlines</button>
@@ -366,17 +334,15 @@
         <button class="btn" onclick="toggleFX('fx-strobe', this)">Strobe</button>
       </div>
 
-      <!-- Modes & Automation -->
       <div class="group">
         <span class="group-label">Modes</span>
-        <button class="btn" id="btn-rotate" onclick="toggleAutoRotate()">Auto-Rotate (10-15s)</button>
+        <button class="btn" id="btn-rotate" onclick="toggleAutoRotate()">Auto-Rotate</button>
         <button class="btn" id="btn-roulette" onclick="toggleRoulette()">Roulette</button>
         <button class="btn" id="btn-chaos" onclick="toggleSpeedChaos()">Speed Chaos</button>
       </div>
 
-      <!-- Batch Link Management -->
       <div class="group">
-        <textarea id="urlInput" class="url-input" placeholder="Paste links or Catbox page text..."></textarea>
+        <textarea id="urlInput" class="url-input" placeholder="Paste links..."></textarea>
         <button class="btn" style="background: var(--accent);" onclick="addDirectUrls()">+ Add Links</button>
         <button class="btn" style="border-color: #ff3355; color: #ff3355;" onclick="clearLibrary()">Clear</button>
       </div>
@@ -385,7 +351,6 @@
   </div>
 
   <script>
-    // Default fallback video list
     let mediaList = [
       "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
       "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
@@ -395,15 +360,13 @@
     ];
 
     let currentGrid = 9;
-    let audioMode = 'hover'; // 'hover' | 'all' | 'mute'
+    let audioMode = 'hover';
     let audioUnlocked = false;
 
-    // Timers & State Flags
     let autoRotateTimer = null;
     let rouletteInterval = null;
     let speedChaosActive = false;
 
-    // Load saved URLs from Puter Key-Value Storage
     window.addEventListener('DOMContentLoaded', async () => {
       try {
         let saved = await puter.kv.get('wall_urls') || [];
@@ -414,16 +377,7 @@
     function enterMatrix() {
       document.getElementById('splash-screen').style.display = 'none';
       audioUnlocked = true;
-      
       buildGrid();
-      
-      // Automatically engage auto-rotate mode if it isn't active yet
-      if (!document.getElementById('btn-rotate').classList.contains('active')) {
-        toggleAutoRotate(true);
-      }
-      
-      const overlayAudio = document.getElementById('audio-overlay');
-      if (overlayAudio.src) overlayAudio.play().catch(() => {});
     }
 
     function setGrid(count) {
@@ -443,18 +397,15 @@
       buildGrid();
     }
 
-    // Assigns a random video source with automatic error fallback
     function assignRandomVideoSource(videoElement, retries = 0) {
-      if (mediaList.length === 0 || retries > 10) return;
+      if (mediaList.length === 0 || retries > 5) return;
 
       const randomIndex = Math.floor(Math.random() * mediaList.length);
-      const chosenUrl = mediaList[randomIndex];
-
-      videoElement.src = chosenUrl;
+      videoElement.src = mediaList[randomIndex];
       
-      // If the link fails to load/play, pick a different URL automatically
       videoElement.onerror = () => {
-        assignRandomVideoSource(videoElement, retries + 1);
+        // Cooldown retry to prevent thread thrashing
+        setTimeout(() => assignRandomVideoSource(videoElement, retries + 1), 500);
       };
 
       videoElement.play().catch(() => {});
@@ -477,19 +428,25 @@
         video.autoplay = true;
         video.loop = true;
         video.playsInline = true;
+        video.preload = "metadata"; // Optimize initial loading buffer overhead
         video.muted = audioMode !== 'all';
 
         if (speedChaosActive) {
-          video.playbackRate = (Math.random() * (1.75 - 0.75) + 0.75).toFixed(2);
+          video.playbackRate = (Math.random() * (1.5 - 0.8) + 0.8).toFixed(2);
         }
 
-        assignRandomVideoSource(video);
+        tile.appendChild(video);
+        wall.appendChild(tile);
 
-        // Hover interactions
+        // Stagger load requests slightly to prevent network concurrency lock
+        setTimeout(() => {
+          assignRandomVideoSource(video);
+        }, i * 75);
+
         tile.addEventListener('mouseenter', () => {
           if (audioMode === 'hover' && audioUnlocked && !rouletteInterval) {
             video.muted = false;
-            video.play();
+            video.play().catch(() => {});
           }
         });
 
@@ -498,38 +455,24 @@
             video.muted = true;
           }
         });
-
-        tile.appendChild(video);
-        wall.appendChild(tile);
       }
     }
 
-    /* Audio Mode Handler */
     function setAudioMode(mode) {
       audioMode = mode;
-      
       document.getElementById('btn-audio-hover').classList.toggle('active', mode === 'hover');
       document.getElementById('btn-audio-all').classList.toggle('active', mode === 'all');
       document.getElementById('btn-audio-mute').classList.toggle('active', mode === 'mute');
 
       const videos = document.querySelectorAll('#video-wall video');
       videos.forEach(v => {
-        if (mode === 'all') {
-          v.muted = false;
-          v.play().catch(() => {});
-        } else {
-          v.muted = true;
-        }
+        v.muted = mode !== 'all';
       });
     }
 
-    /* Background Audio Overlay Options */
     function handleAudioUpload(event) {
       const file = event.target.files[0];
-      if (file) {
-        const url = URL.createObjectURL(file);
-        playAudioOverlay(url);
-      }
+      if (file) playAudioOverlay(URL.createObjectURL(file));
     }
 
     function handleAudioUrl(url) {
@@ -546,58 +489,44 @@
       document.getElementById('audio-overlay').volume = parseFloat(val);
     }
 
-    /* Visual FX Toggles */
     function toggleFX(fxClass, btn) {
-      const container = document.getElementById('fx-container');
-      container.classList.toggle(fxClass);
+      document.getElementById('fx-container').classList.toggle(fxClass);
       btn.classList.toggle('active');
     }
 
-    /* Mode: Auto-Rotate / Video Swap (10-15s Random Interval) */
-    function toggleAutoRotate(forceState = null) {
+    function toggleAutoRotate() {
       const btn = document.getElementById('btn-rotate');
-      const isEnabling = forceState !== null ? forceState : !btn.classList.contains('active');
-
-      if (!isEnabling) {
+      if (autoRotateTimer) {
         clearTimeout(autoRotateTimer);
         autoRotateTimer = null;
         btn.classList.remove('active');
-        btn.innerText = "Auto-Rotate (Off)";
       } else {
         btn.classList.add('active');
-        btn.innerText = "Auto-Rotate (10-15s)";
         scheduleNextRotation();
       }
     }
 
     function scheduleNextRotation() {
-      const delay = Math.floor(Math.random() * 5000) + 10000; 
-      
       autoRotateTimer = setTimeout(() => {
         rotateGridVideos();
-        if (document.getElementById('btn-rotate').classList.contains('active')) {
-          scheduleNextRotation();
-        }
-      }, delay);
+        if (autoRotateTimer) scheduleNextRotation();
+      }, Math.floor(Math.random() * 5000) + 12000);
     }
 
     function rotateGridVideos() {
       const videos = document.querySelectorAll('#video-wall video');
-      if (mediaList.length === 0 || videos.length === 0) return;
-
-      videos.forEach((video) => {
-        assignRandomVideoSource(video);
+      if (videos.length === 0) return;
+      videos.forEach((video, idx) => {
+        setTimeout(() => assignRandomVideoSource(video), idx * 100);
       });
     }
 
-    /* Mode: Spotlight Roulette */
     function toggleRoulette() {
       const btn = document.getElementById('btn-roulette');
       if (rouletteInterval) {
         clearInterval(rouletteInterval);
         rouletteInterval = null;
         btn.classList.remove('active');
-        
         document.querySelectorAll('.tile').forEach(t => t.classList.remove('dimmed', 'active-roulette'));
         setAudioMode(audioMode);
       } else {
@@ -610,7 +539,6 @@
     function runRouletteStep() {
       const tiles = Array.from(document.querySelectorAll('.tile'));
       if (tiles.length === 0) return;
-
       const activeIndex = Math.floor(Math.random() * tiles.length);
 
       tiles.forEach((tile, idx) => {
@@ -618,10 +546,7 @@
         if (idx === activeIndex) {
           tile.classList.remove('dimmed');
           tile.classList.add('active-roulette');
-          if (video) {
-            video.muted = false;
-            video.play().catch(() => {});
-          }
+          if (video) { video.muted = false; video.play().catch(() => {}); }
         } else {
           tile.classList.add('dimmed');
           tile.classList.remove('active-roulette');
@@ -630,21 +555,18 @@
       });
     }
 
-    /* Mode: Speed Chaos */
     function toggleSpeedChaos() {
       const btn = document.getElementById('btn-chaos');
       speedChaosActive = !speedChaosActive;
       btn.classList.toggle('active', speedChaosActive);
 
-      const videos = document.querySelectorAll('#video-wall video');
-      videos.forEach(video => {
+      document.querySelectorAll('#video-wall video').forEach(video => {
         video.playbackRate = speedChaosActive 
-          ? parseFloat((Math.random() * (1.75 - 0.75) + 0.75).toFixed(2))
+          ? parseFloat((Math.random() * (1.5 - 0.8) + 0.8).toFixed(2))
           : 1.0;
       });
     }
 
-    /* Extract & Store Batch URLs */
     async function addDirectUrls() {
       const input = document.getElementById('urlInput');
       const rawText = input.value.trim();
@@ -654,59 +576,27 @@
       let extractedUrls = [];
 
       for (let line of lines) {
-        const filebinBinMatch = line.match(/^https:\/\/filebin\.net\/([a-zA-Z0-9]+)$/);
-
-        if (filebinBinMatch) {
-          try {
-            const response = await fetch(`${line}.txt`);
-            const textData = await response.text();
-            const fileUrls = textData.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
-            extractedUrls.push(...fileUrls);
-          } catch (error) {
-            console.error("Failed to fetch Filebin list:", error);
-          }
-        } else {
-          const urlRegex = /(https?:\/\/[^\s"',]+)/g;
-          const matches = line.match(urlRegex) || [];
-          
-          const validMatches = matches
-            .map(url => url.replace(/;$/, '').trim())
-            .filter(url => 
-              url.includes('files.catbox.moe') || 
-              url.includes('filebin.net') || 
-              url.match(/\.(mp4|webm|mov)(\?.*)?$/i)
-            );
-          
-          extractedUrls.push(...validMatches);
-        }
+        const urlRegex = /(https?:\/\/[^\s"',]+)/g;
+        const matches = line.match(urlRegex) || [];
+        extractedUrls.push(...matches);
       }
 
-      if (extractedUrls.length === 0) {
-        alert("No valid video, Catbox, or Filebin links found in input.");
-        return;
-      }
+      if (extractedUrls.length === 0) return;
 
-      const uniqueUrls = [...new Set(extractedUrls)];
-      mediaList = [...uniqueUrls, ...mediaList];
+      mediaList = [...new Set([...extractedUrls, ...mediaList])];
       input.value = '';
 
-      try {
-        await puter.kv.set('wall_urls', mediaList);
-      } catch(e) {}
-
+      try { await puter.kv.set('wall_urls', mediaList); } catch(e) {}
       buildGrid();
     }
 
     async function clearLibrary() {
       if (!confirm("Reset video link library?")) return;
       mediaList = [];
-      try {
-        await puter.kv.del('wall_urls');
-      } catch(e) {}
+      try { await puter.kv.del('wall_urls'); } catch(e) {}
       buildGrid();
     }
 
-    /* Controls Bar Auto-Hide Timer */
     let hideTimer;
     window.addEventListener('mousemove', () => {
       document.body.classList.add('show-controls');
