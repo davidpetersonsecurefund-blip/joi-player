@@ -623,15 +623,39 @@
       const rawText = input.value.trim();
       if (!rawText) return;
 
-      const urlRegex = /(https?:\/\/[^\s"',]+)/g;
-      const matches = rawText.match(urlRegex) || [];
+      const lines = rawText.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+      let extractedUrls = [];
 
-      const extractedUrls = matches
-        .map(url => url.replace(/;$/, '').trim())
-        .filter(url => url.includes('files.catbox.moe') || url.match(/\.(mp4|webm|mov)(\?.*)?$/i));
+      for (let line of lines) {
+        const filebinBinMatch = line.match(/^https:\/\/filebin\.net\/([a-zA-Z0-9]+)$/);
+
+        if (filebinBinMatch) {
+          try {
+            const response = await fetch(`${line}.txt`);
+            const textData = await response.text();
+            const fileUrls = textData.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+            extractedUrls.push(...fileUrls);
+          } catch (error) {
+            console.error("Failed to fetch Filebin list:", error);
+          }
+        } else {
+          const urlRegex = /(https?:\/\/[^\s"',]+)/g;
+          const matches = line.match(urlRegex) || [];
+          
+          const validMatches = matches
+            .map(url => url.replace(/;$/, '').trim())
+            .filter(url => 
+              url.includes('files.catbox.moe') || 
+              url.includes('filebin.net') || 
+              url.match(/\.(mp4|webm|mov)(\?.*)?$/i)
+            );
+          
+          extractedUrls.push(...validMatches);
+        }
+      }
 
       if (extractedUrls.length === 0) {
-        alert("No valid video or Catbox links found in input.");
+        alert("No valid video, Catbox, or Filebin links found in input.");
         return;
       }
 
