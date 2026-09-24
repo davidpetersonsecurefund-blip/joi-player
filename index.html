@@ -369,7 +369,7 @@
       <!-- Modes & Automation -->
       <div class="group">
         <span class="group-label">Modes</span>
-        <button class="btn" id="btn-rotate" onclick="toggleAutoRotate()">Auto-Rotate (12s)</button>
+        <button class="btn" id="btn-rotate" onclick="toggleAutoRotate()">Auto-Rotate (10-15s)</button>
         <button class="btn" id="btn-roulette" onclick="toggleRoulette()">Roulette</button>
         <button class="btn" id="btn-chaos" onclick="toggleSpeedChaos()">Speed Chaos</button>
       </div>
@@ -399,7 +399,7 @@
     let audioUnlocked = false;
 
     // Timers & State Flags
-    let autoRotateInterval = null;
+    let autoRotateTimer = null;
     let rouletteInterval = null;
     let speedChaosActive = false;
 
@@ -414,7 +414,13 @@
     function enterMatrix() {
       document.getElementById('splash-screen').style.display = 'none';
       audioUnlocked = true;
+      
       buildGrid();
+      
+      // Automatically engage auto-rotate mode if it isn't active yet
+      if (!document.getElementById('btn-rotate').classList.contains('active')) {
+        toggleAutoRotate(true);
+      }
       
       const overlayAudio = document.getElementById('audio-overlay');
       if (overlayAudio.src) overlayAudio.play().catch(() => {});
@@ -453,7 +459,11 @@
         tile.dataset.index = i;
 
         const video = document.createElement('video');
-        video.src = mediaList[i % mediaList.length];
+        
+        // Pick a random index rather than assigning sequentially
+        const randomIndex = Math.floor(Math.random() * mediaList.length);
+        video.src = mediaList[randomIndex];
+        
         video.autoplay = true;
         video.loop = true;
         video.playsInline = true;
@@ -532,18 +542,34 @@
       btn.classList.toggle('active');
     }
 
-    /* Mode: Auto-Rotate / Video Swap (12s) */
-    function toggleAutoRotate() {
+    /* Mode: Auto-Rotate / Video Swap (10-15s Random Interval) */
+    function toggleAutoRotate(forceState = null) {
       const btn = document.getElementById('btn-rotate');
-      if (autoRotateInterval) {
-        clearInterval(autoRotateInterval);
-        autoRotateInterval = null;
+      const isEnabling = forceState !== null ? forceState : !btn.classList.contains('active');
+
+      if (!isEnabling) {
+        clearTimeout(autoRotateTimer);
+        autoRotateTimer = null;
         btn.classList.remove('active');
+        btn.innerText = "Auto-Rotate (Off)";
       } else {
         btn.classList.add('active');
-        autoRotateInterval = setInterval(rotateGridVideos, 12000);
-        rotateGridVideos();
+        btn.innerText = "Auto-Rotate (10-15s)";
+        scheduleNextRotation();
       }
+    }
+
+    function scheduleNextRotation() {
+      // Pick a random delay between 10,000ms and 15,000ms
+      const delay = Math.floor(Math.random() * 5000) + 10000; 
+      
+      autoRotateTimer = setTimeout(() => {
+        rotateGridVideos();
+        // Continue looping if active
+        if (document.getElementById('btn-rotate').classList.contains('active')) {
+          scheduleNextRotation();
+        }
+      }, delay);
     }
 
     function rotateGridVideos() {
