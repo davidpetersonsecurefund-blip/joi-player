@@ -385,7 +385,7 @@
   </div>
 
   <script>
-    // Default video list
+    // Default fallback video list
     let mediaList = [
       "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
       "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
@@ -430,7 +430,6 @@
       currentGrid = count;
       const wall = document.getElementById('video-wall');
       
-      // Clear current grid classes
       wall.className = '';
       if (count === 'spotlight') {
         wall.classList.add('grid-spotlight');
@@ -438,11 +437,27 @@
         wall.classList.add(`grid-${count}`);
       }
 
-      // Sync active button state
       document.querySelectorAll('.group:first-child .btn').forEach(b => b.classList.remove('active'));
       if (event && event.target) event.target.classList.add('active');
 
       buildGrid();
+    }
+
+    // Assigns a random video source with automatic error fallback
+    function assignRandomVideoSource(videoElement, retries = 0) {
+      if (mediaList.length === 0 || retries > 10) return;
+
+      const randomIndex = Math.floor(Math.random() * mediaList.length);
+      const chosenUrl = mediaList[randomIndex];
+
+      videoElement.src = chosenUrl;
+      
+      // If the link fails to load/play, pick a different URL automatically
+      videoElement.onerror = () => {
+        assignRandomVideoSource(videoElement, retries + 1);
+      };
+
+      videoElement.play().catch(() => {});
     }
 
     function buildGrid() {
@@ -459,11 +474,6 @@
         tile.dataset.index = i;
 
         const video = document.createElement('video');
-        
-        // Pick a random index rather than assigning sequentially
-        const randomIndex = Math.floor(Math.random() * mediaList.length);
-        video.src = mediaList[randomIndex];
-        
         video.autoplay = true;
         video.loop = true;
         video.playsInline = true;
@@ -472,6 +482,8 @@
         if (speedChaosActive) {
           video.playbackRate = (Math.random() * (1.75 - 0.75) + 0.75).toFixed(2);
         }
+
+        assignRandomVideoSource(video);
 
         // Hover interactions
         tile.addEventListener('mouseenter', () => {
@@ -489,7 +501,6 @@
 
         tile.appendChild(video);
         wall.appendChild(tile);
-        video.play().catch(() => {});
       }
     }
 
@@ -560,12 +571,10 @@
     }
 
     function scheduleNextRotation() {
-      // Pick a random delay between 10,000ms and 15,000ms
       const delay = Math.floor(Math.random() * 5000) + 10000; 
       
       autoRotateTimer = setTimeout(() => {
         rotateGridVideos();
-        // Continue looping if active
         if (document.getElementById('btn-rotate').classList.contains('active')) {
           scheduleNextRotation();
         }
@@ -577,14 +586,7 @@
       if (mediaList.length === 0 || videos.length === 0) return;
 
       videos.forEach((video) => {
-        // Pick a random video from the media library
-        const randomIndex = Math.floor(Math.random() * mediaList.length);
-        const newSrc = mediaList[randomIndex];
-        
-        if (video.src !== newSrc) {
-          video.src = newSrc;
-          video.play().catch(() => {});
-        }
+        assignRandomVideoSource(video);
       });
     }
 
@@ -596,7 +598,6 @@
         rouletteInterval = null;
         btn.classList.remove('active');
         
-        // Restore tile states
         document.querySelectorAll('.tile').forEach(t => t.classList.remove('dimmed', 'active-roulette'));
         setAudioMode(audioMode);
       } else {
