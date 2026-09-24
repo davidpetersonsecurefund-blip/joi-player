@@ -109,7 +109,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      transform: translateZ(0); /* Hardware Acceleration Hint */
+      transform: translateZ(0);
       will-change: transform;
       border: 1px solid transparent;
     }
@@ -132,7 +132,7 @@
       z-index: 5;
     }
 
-    /* Hardware Accelerated Visual FX System */
+    /* FX System */
     #fx-container {
       position: fixed;
       inset: 0;
@@ -359,6 +359,7 @@
       "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4"
     ];
 
+    let shuffleDeck = [];
     let currentGrid = 9;
     let audioMode = 'hover';
     let audioUnlocked = false;
@@ -397,15 +398,53 @@
       buildGrid();
     }
 
-    function assignRandomVideoSource(videoElement, retries = 0) {
+    /* Helper: Returns active video sources currently rendered on screen */
+    function getActiveOnScreenSources(excludeVideo = null) {
+      const activeUrls = [];
+      document.querySelectorAll('#video-wall video').forEach(v => {
+        if (v !== excludeVideo && v.src) {
+          activeUrls.push(v.src);
+        }
+      });
+      return activeUrls;
+    }
+
+    /* Helper: Shuffled Non-Repeating Queue Draw */
+    function getNextVideoUrl(videoElement) {
+      if (mediaList.length === 0) return '';
+
+      const activeUrls = getActiveOnScreenSources(videoElement);
+
+      // Refill deck if depleted
+      if (shuffleDeck.length === 0) {
+        shuffleDeck = [...mediaList].sort(() => Math.random() - 0.5);
+      }
+
+      // Try to find a clip from the deck that isn't currently displayed elsewhere on screen
+      let chosenIndex = shuffleDeck.findIndex(url => !activeUrls.includes(url));
+
+      // If all deck items are currently on screen (e.g. 25-grid with only 5 videos), fallback to deck head
+      if (chosenIndex === -1) {
+        chosenIndex = 0;
+      }
+
+      const chosenUrl = shuffleDeck.splice(chosenIndex, 1)[0];
+      return chosenUrl;
+    }
+
+    function assignUniqueVideoSource(videoElement, retries = 0) {
       if (mediaList.length === 0 || retries > 5) return;
 
-      const randomIndex = Math.floor(Math.random() * mediaList.length);
-      videoElement.src = mediaList[randomIndex];
-      
+      const newUrl = getNextVideoUrl(videoElement);
+      if (!newUrl) return;
+
+      videoElement.src = newUrl;
+
+      // Handle broken/dead links without infinite loops
       videoElement.onerror = () => {
-        // Cooldown retry to prevent thread thrashing
-        setTimeout(() => assignRandomVideoSource(videoElement, retries + 1), 500);
+        setTimeout(() => {
+          assignUniqueVideoSource(videoElement, retries + 1);
+        }, 300);
       };
 
       videoElement.play().catch(() => {});
@@ -416,6 +455,9 @@
       wall.innerHTML = '';
 
       if (mediaList.length === 0) return;
+
+      // Reset shuffle deck on full grid rebuild
+      shuffleDeck = [...mediaList].sort(() => Math.random() - 0.5);
 
       const tileCount = currentGrid === 'spotlight' ? 9 : parseInt(currentGrid);
 
@@ -428,7 +470,7 @@
         video.autoplay = true;
         video.loop = true;
         video.playsInline = true;
-        video.preload = "metadata"; // Optimize initial loading buffer overhead
+        video.preload = "metadata";
         video.muted = audioMode !== 'all';
 
         if (speedChaosActive) {
@@ -438,10 +480,10 @@
         tile.appendChild(video);
         wall.appendChild(tile);
 
-        // Stagger load requests slightly to prevent network concurrency lock
+        // Stagger initialization slightly for smooth loading
         setTimeout(() => {
-          assignRandomVideoSource(video);
-        }, i * 75);
+          assignUniqueVideoSource(video);
+        }, i * 60);
 
         tile.addEventListener('mouseenter', () => {
           if (audioMode === 'hover' && audioUnlocked && !rouletteInterval) {
@@ -510,14 +552,15 @@
       autoRotateTimer = setTimeout(() => {
         rotateGridVideos();
         if (autoRotateTimer) scheduleNextRotation();
-      }, Math.floor(Math.random() * 5000) + 12000);
+      }, Math.floor(Math.random() * 5000) + 10000);
     }
 
     function rotateGridVideos() {
       const videos = document.querySelectorAll('#video-wall video');
       if (videos.length === 0) return;
+
       videos.forEach((video, idx) => {
-        setTimeout(() => assignRandomVideoSource(video), idx * 100);
+        setTimeout(() => assignUniqueVideoSource(video), idx * 80);
       });
     }
 
@@ -584,6 +627,7 @@
       if (extractedUrls.length === 0) return;
 
       mediaList = [...new Set([...extractedUrls, ...mediaList])];
+      shuffleDeck = [...mediaList].sort(() => Math.random() - 0.5);
       input.value = '';
 
       try { await puter.kv.set('wall_urls', mediaList); } catch(e) {}
@@ -593,6 +637,7 @@
     async function clearLibrary() {
       if (!confirm("Reset video link library?")) return;
       mediaList = [];
+      shuffleDeck = [];
       try { await puter.kv.del('wall_urls'); } catch(e) {}
       buildGrid();
     }
