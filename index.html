@@ -4,9 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#07040d">
-<title>JOI Player</title>
+<title>JOI HUB · 18+</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&display=swap">
 <style>
-:root{--bg:#07040d;--panel:#120a1c;--line:#2d1838;--pink:#ff007f;--cyan:#00f0ff;--vio:#7900ff;--txt:#fff;--mut:#a99bb8}
+:root{--disp:"Anton","Impact","Haettenschweiler","Arial Narrow Bold",sans-serif;--bg:#050005;--panel:#0f060f;--line:#3a0a2a;--pink:#ff0a78;--cyan:#ffc400;--vio:#b0002f;--txt:#fff;--mut:#a99bb8}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;background:var(--bg);color:var(--txt);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
 body{padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
@@ -85,10 +87,59 @@ textarea{min-height:260px;font-family:ui-monospace,Menlo,monospace;font-size:.75
 #vbar{position:absolute;top:calc(env(safe-area-inset-top) + 10px);right:10px;display:flex;gap:6px;z-index:3}
 #vbar button{min-height:44px;padding:0 12px;border-radius:22px;background:#000b;border:1px solid #fff5;color:#fff;font-weight:700;font-size:.8rem}
 #vbar button.cur{border-color:var(--cyan);color:var(--cyan)}
-@media (prefers-reduced-motion:reduce){*{transition:none!important}.ov::after,.warp .tile{animation:none!important}}
+
+/* ===== site skin ===== */
+body{background:var(--bg) radial-gradient(ellipse at 50% -10%,#ff0a7830,transparent 55%) no-repeat,radial-gradient(ellipse at 100% 100%,#b0002f2e,transparent 50%) no-repeat}
+#gate{position:fixed;inset:0;z-index:200;background:#050005;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center}
+#gate p{max-width:360px;color:var(--mut);font-size:.9rem;line-height:1.5}
+#gate .age{font-size:1.1rem;padding:6px 14px}
+#gate .btn{max-width:360px}
+header#top{display:flex;align-items:center;gap:10px;padding:12px 14px 8px;max-width:520px;margin:0 auto}
+.logo{font-family:var(--disp);font-size:2.1rem;letter-spacing:.06em;line-height:1;color:#ffe3f1;text-shadow:0 0 3px #fff,0 0 12px var(--pink),0 0 28px var(--pink),0 0 52px var(--pink)}
+.logo span{color:var(--pink);text-shadow:0 0 3px #ffc2e0,0 0 14px var(--pink),0 0 34px var(--pink);animation:flick 5s infinite}
+@keyframes flick{0%,18%,22%,62%,64%,100%{opacity:1}20%,63%{opacity:.35}}
+.age{border:2px solid var(--pink);color:var(--pink);font-family:var(--disp);padding:2px 8px;border-radius:6px;font-size:.95rem;letter-spacing:.05em}
+.chip{margin-left:auto;font-family:var(--disp);letter-spacing:.05em;font-size:.9rem;padding:5px 12px;border:1px solid var(--pink);border-radius:20px;background:#0008}
+.ticker{overflow:hidden;border-block:1px solid var(--line);background:linear-gradient(90deg,#b0002f,#ff0a78,#b0002f);white-space:nowrap}
+.tk{display:inline-block;animation:tk 28s linear infinite;padding:5px 0}
+.tk i{font:400 .85rem var(--disp);letter-spacing:.14em;font-style:normal;margin-right:26px;color:#fff;text-shadow:0 1px 2px #0006}
+@keyframes tk{to{transform:translateX(-50%)}}
+nav{background:#050005f2}
+nav button{font-family:var(--disp);font-weight:400;letter-spacing:.07em;text-transform:uppercase;font-size:.95rem;background:#12050f}
+nav button.on{background:linear-gradient(135deg,var(--pink),var(--vio));box-shadow:0 0 16px #ff0a7899}
+h2{font-family:var(--disp);font-weight:400;font-size:1.55rem;text-transform:uppercase;letter-spacing:.05em;padding-left:10px;border-left:5px solid var(--pink)}
+.box{background:linear-gradient(#160717,#0c040d);border:1px solid var(--line);box-shadow:0 0 0 1px #ff0a7812,0 10px 30px #000a}
+.hero{margin-bottom:12px;padding:18px 16px;border-radius:14px;border:1px solid var(--pink);background:linear-gradient(120deg,#ff0a7833,#b0002f22 60%,#0000),#0c040d;box-shadow:0 0 28px #ff0a7833}
+.hero-t{font-family:var(--disp);font-size:1.9rem;letter-spacing:.04em;line-height:1.05;text-transform:uppercase;text-shadow:0 0 18px #ff0a78aa}
+.hero-s{margin-top:6px;color:#ffd0e6;font-size:.9rem}
+.btn{font-family:var(--disp);font-weight:400;font-size:1.25rem;letter-spacing:.08em;text-transform:uppercase;box-shadow:0 0 22px #ff0a7866}
+.btn.alt{box-shadow:none}
+#go,#vgo{min-height:60px;font-size:1.5rem}
+#mode,#vmode{display:none}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.grp{grid-column:1/-1;margin-top:6px;font:400 .9rem var(--disp);letter-spacing:.14em;color:var(--cyan);text-transform:uppercase}
+.mc{display:flex;flex-direction:column;gap:2px;text-align:left;padding:10px 12px;min-height:66px;border-radius:12px;background:#140614;border:1px solid var(--line);color:#fff;font:600 .85rem system-ui;cursor:pointer}
+.mc em{font-style:normal;font-size:1.3rem;line-height:1}
+.mc small{color:var(--mut);font-weight:500;font-size:.7rem}
+.mc.on{border-color:var(--pink);background:linear-gradient(135deg,#ff0a7840,#140614);box-shadow:0 0 16px #ff0a7866}
+#emblem{width:112px;height:112px;margin:4px auto 12px;border-radius:50%;border:4px solid var(--pink);display:flex;align-items:center;justify-content:center;font:400 3.2rem var(--disp);background:radial-gradient(circle,#1c0a1c,#050005)}
+#rk2{display:block;text-align:center;font-family:var(--disp);font-weight:400;font-size:1.6rem;letter-spacing:.05em;text-transform:uppercase}
+#say h1{font-family:var(--disp);font-weight:400;text-transform:uppercase;font-size:clamp(2.1rem,11vw,3.6rem);letter-spacing:.02em;text-shadow:0 0 12px var(--c,#fff),0 0 34px var(--c,#fff),0 2px 8px #000}
+#ring{box-shadow:inset 0 0 44px var(--c,#555)}
+.pill{font-family:var(--disp);font-weight:400;letter-spacing:.06em}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}.logo span,.tk{animation:none!important}.ov::after,.warp .tile{animation:none!important}}
 </style>
 </head>
 <body>
+<div id="gate">
+  <div class="logo" style="font-size:3.2rem">JOI<span>HUB</span></div>
+  <span class="age">18+ ONLY</span>
+  <p>This site is for adults. By entering you confirm you are 18 or older. Your media and progress stay on this device. No accounts, no ads, no tracking.</p>
+  <button class="btn" id="enter">I am 18 or older. Enter</button>
+  <button class="btn alt" id="leave">Leave</button>
+</div>
+<header id="top"><div class="logo">JOI<span>HUB</span></div><span class="age">18+</span><span class="chip" id="chip">Lv 1</span></header>
+<div class="ticker"><div class="tk" id="tk"></div></div>
 <nav id="nav">
   <button class="on" data-v="play">Play</button>
   <button data-v="vis">Visual</button>
@@ -98,7 +149,7 @@ textarea{min-height:260px;font-family:ui-monospace,Menlo,monospace;font-size:.75
 </nav>
 <main>
   <section class="view on" id="play">
-    <h2>Session</h2>
+    <div class="hero"><div class="hero-t">Tonight's session</div><div class="hero-s">Pick a game. Start the timer. Don't blink.</div></div>
     <div class="box">
       <div class="row"><b id="rk">Level 1</b><span id="xpv" class="mut" style="text-align:right">0 XP</span></div>
       <div class="bar"><i id="xpb"></i></div>
@@ -116,13 +167,14 @@ textarea{min-height:260px;font-family:ui-monospace,Menlo,monospace;font-size:.75
           <option value="slowburn">Slow burn (BPM winds down)</option>
         </select>
       </label>
+      <div class="cards" id="mc"></div>
       <div id="status" class="mut" style="margin-top:10px"></div>
       <button class="btn" id="go">Start session</button>
     </div>
   </section>
 
   <section class="view" id="vis">
-    <h2>Visual modes</h2>
+    <h2>Visual FX</h2>
     <div class="box">
       <label>Mode
         <select id="vmode">
@@ -147,6 +199,7 @@ textarea{min-height:260px;font-family:ui-monospace,Menlo,monospace;font-size:.75
           </optgroup>
         </select>
       </label>
+      <div class="cards" id="vmc"></div>
       <label>Folder<select id="vfolder"></select></label>
       <label>Videos playing at once (lower = smoother)
         <select id="vcap"><option>2</option><option>4</option><option>6</option><option>10</option></select>
@@ -174,7 +227,7 @@ textarea{min-height:260px;font-family:ui-monospace,Menlo,monospace;font-size:.75
 
   <section class="view" id="rank">
     <h2>Rank</h2>
-    <div class="box"><b id="rk2"></b><div class="bar"><i id="xpb2"></i></div><p class="mut" id="stats" style="margin-top:10px"></p></div>
+    <div class="box"><div id="emblem"></div><b id="rk2"></b><div class="bar"><i id="xpb2"></i></div><p class="mut" id="stats" style="margin-top:10px"></p></div>
     <div class="box"><b>Badges</b><div id="badges"></div></div>
   </section>
 
@@ -322,6 +375,8 @@ function renderRank(){
   const R=RANKS[Math.min(Math.floor((L-1)/2),RANKS.length-1)],t=`Lv ${L} · ${R[0]}`;
   for(const id of ["#rk","#rk2"]){const e=$(id);e.textContent=t;e.style.color=R[1];e.style.textShadow=`0 0 12px ${R[1]}`}
   $("#xpv").textContent=prof.xp+" XP";
+  const em=$("#emblem");em.textContent=L;em.style.borderColor=em.style.color=R[1];em.style.boxShadow=`0 0 28px ${R[1]}88, inset 0 0 22px ${R[1]}44`;
+  const ch=$("#chip");ch.textContent=t;ch.style.color=ch.style.borderColor=R[1];
   $("#xpb").style.width=$("#xpb2").style.width=pct+"%";
   $("#stats").textContent=`${prof.sessions} sessions · longest ${Math.floor(prof.best/60)}m · ${prof.fails} fails · ${hi-prof.xp} XP to level ${L+1}`;
   $("#badges").innerHTML=BADGES.map(([n,f])=>`<span class="badge ${f(prof)?"got":""}">${n}</span>`).join("");
@@ -441,7 +496,7 @@ document.addEventListener("visibilitychange",()=>{if(S&&!document.hidden&&opt.wa
 
 /* ---------- settings ---------- */
 ["metro","voice","wake"].forEach(k=>{const c=$("#o-"+k);c.checked=opt[k];c.onchange=()=>{opt[k]=c.checked;LS.set("opt",opt)}});
-const THEMES={neon:["#ff007f","#00f0ff","#7900ff"],ember:["#ff5a1f","#ffd23f","#c1121f"],ocean:["#00b4ff","#00ffd5","#3a2bff"],toxic:["#7dff00","#00ffa6","#00a86b"],mono:["#e8e8e8","#9aa0a6","#555555"]};
+const THEMES={neon:["#ff0a78","#ffc400","#b0002f"],ember:["#ff5a1f","#ffd23f","#c1121f"],ocean:["#00b4ff","#00ffd5","#3a2bff"],toxic:["#7dff00","#00ffa6","#00a86b"],mono:["#e8e8e8","#9aa0a6","#555555"]};
 function applyTheme(){const t=THEMES[opt.theme]||THEMES.neon,r=document.documentElement.style;r.setProperty("--pink",opt.accent||t[0]);r.setProperty("--cyan",t[1]);r.setProperty("--vio",t[2])}
 for(const [k,id] of [["rounds","#o-rounds"],["len","#o-len"],["theme","#o-theme"]]){const el=$(id);el.value=String(opt[k]);el.onchange=()=>{opt[k]=k==="theme"?el.value:+el.value;LS.set("opt",opt);applyTheme()}}
 $("#o-accent").value=opt.accent||THEMES[opt.theme][0];
@@ -588,6 +643,24 @@ $("#vexit").onclick=vStop;
 $("#nextlay").onclick=()=>{if(V){V.li++;wallBuild()}};
 $("#aspects").onclick=e=>{const b=e.target.closest("button");if(b&&V&&V.fr){V.asp=b.dataset.a;V.fr.className="frame "+V.asp}};
 document.addEventListener("keydown",e=>{if(V&&e.key==="Escape")vStop()});
+
+/* ---------- site chrome ---------- */
+if(LS.get("age18",false))$("#gate").style.display="none";
+$("#enter").onclick=()=>{LS.set("age18",true);$("#gate").style.display="none"};
+$("#leave").onclick=()=>{location.href="https://www.google.com"};
+{const w=["ADULTS ONLY","EDGE","DENY","OBEY","REPEAT","100% PRIVATE","STAYS ON YOUR DEVICE","ZERO ADS","ZERO TRACKING","NO LIMITS"],h=w.map(x=>`<i>${x}</i>`).join("");$("#tk").innerHTML=h+h}
+const EMO={standard:"🔥",extended:"⏳",escalation:"📈",roulette:"🎲",nnn:"🧱",gauntlet:"⚔️",slowburn:"🕯️",cam:"📹",strobeS:"💡",strobeF:"⚡",overdose:"☠️",subliminal:"👁️",blackout:"🌑",hijack:"📼",vip:"🥂",xerox:"🖨️",cyber:"🌐",hypno:"🌀",wall:"🔲",overdrive:"🚀",hypnowall:"🔮",gooncave:"🕳️"};
+function cardify(sel,box){
+  const S=$("#"+sel),B=$("#"+box);
+  const add=o=>{
+    const k=o.text.indexOf(" ("),t=k>0?o.text.slice(0,k):o.text,sub=k>0?o.text.slice(k+2).replace(/[)]$/,""):"",b=document.createElement("button");b.type="button";b.className="mc"+(S.value===o.value?" on":"");
+    b.innerHTML=`<em>${EMO[o.value]||"🔥"}</em>`;b.append(t);if(sub){const m=document.createElement("small");m.textContent=sub;b.append(m)}
+    b.onclick=()=>{S.value=o.value;B.querySelectorAll(".mc").forEach(x=>x.classList.toggle("on",x===b))};
+    B.append(b);
+  };
+  [...S.children].forEach(c=>{if(c.tagName==="OPTGROUP"){const g=document.createElement("div");g.className="grp";g.textContent=c.label;B.append(g);[...c.children].forEach(add)}else add(c)});
+}
+cardify("mode","mc");cardify("vmode","vmc");
 
 renderRank();load();
 if("serviceWorker" in navigator&&location.protocol==="https:"){/* optional: add a sw.js later for offline use */}
