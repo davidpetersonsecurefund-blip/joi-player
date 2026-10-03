@@ -127,6 +127,21 @@ h2{font-family:var(--disp);font-weight:400;font-size:1.55rem;text-transform:uppe
 #say h1{font-family:var(--disp);font-weight:400;text-transform:uppercase;font-size:clamp(2.1rem,11vw,3.6rem);letter-spacing:.02em;text-shadow:0 0 12px var(--c,#fff),0 0 34px var(--c,#fff),0 2px 8px #000}
 #ring{box-shadow:inset 0 0 44px var(--c,#555)}
 .pill{font-family:var(--disp);font-weight:400;letter-spacing:.06em}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:4px}
+.chips button{flex:0 0 auto;min-height:38px;padding:0 14px;border-radius:20px;background:#12050f;border:1px solid var(--line);color:var(--mut);font:400 .9rem var(--disp);letter-spacing:.05em}
+.chips button.on{background:var(--pink);border-color:var(--pink);color:#fff}
+.sub{font:400 1.05rem var(--disp);letter-spacing:.06em;text-transform:uppercase;margin:10px 0 6px;color:var(--cyan)}
+.lgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+@media(min-width:600px){.lgrid{grid-template-columns:repeat(3,1fr)}}
+.rrow{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px}.rrow .tl{flex:0 0 120px}
+.tl{position:relative;display:block;border-radius:10px;overflow:hidden;background:#140614;border:1px solid var(--line);aspect-ratio:1/1;cursor:pointer;padding:0;color:#fff;text-align:left}
+.tl img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.tl .ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:2rem;background:linear-gradient(135deg,#2a0a24,#12050f)}
+.tl .nm{position:absolute;left:0;right:0;bottom:0;padding:18px 8px 6px;font-size:.72rem;background:linear-gradient(transparent,#000d);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tl .du{display:none;position:absolute;top:6px;right:6px;padding:2px 6px;border-radius:6px;background:#000b;font-size:.7rem;font-variant-numeric:tabular-nums}
+#pv{position:fixed;inset:0;z-index:150;background:#000e;display:none;flex-direction:column;align-items:center;justify-content:center;padding:14px;gap:10px}#pv.on{display:flex}
+#pvm{width:100%;max-width:560px;display:flex;justify-content:center}#pvm video,#pvm img{max-width:100%;max-height:68dvh;border-radius:12px}
+#pvt{font-size:.85rem;color:var(--mut);max-width:560px;width:100%;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}.logo span,.tk{animation:none!important}.ov::after,.warp .tile{animation:none!important}}
 </style>
 </head>
@@ -222,7 +237,15 @@ h2{font-family:var(--disp);font-weight:400;font-size:1.55rem;text-transform:uppe
       <div id="imp" class="mut" style="margin-top:8px"></div>
       <p class="mut" style="margin-top:10px">Files stay on this device (browser storage). Nothing is uploaded anywhere. Duplicates are skipped. iPhone Safari can't pick whole folders, so use multi-select there.</p>
     </div>
-    <div class="box" id="list"></div>
+    <div class="box">
+      <div class="mut" id="lstat"></div>
+      <div class="chips" id="chips"></div>
+      <div id="rec"></div>
+      <div class="sub" id="lhead"></div>
+      <div class="lgrid" id="grid"></div>
+      <button class="btn alt" id="more" style="display:none">Show more</button>
+      <button class="btn bad" id="delf" style="display:none;min-height:42px;font-size:1rem">Delete this folder</button>
+    </div>
   </section>
 
   <section class="view" id="rank">
@@ -271,6 +294,9 @@ h2{font-family:var(--disp);font-weight:400;font-size:1.55rem;text-transform:uppe
   <div id="sheet"><div class="box"><h2 id="sh-t"></h2><p id="sh-d" class="mut"></p><button class="btn" id="sh-b">OK</button></div></div>
 </div>
 
+<div id="pv"><div id="pvm"></div><div id="pvt"></div>
+  <div class="row" style="width:100%;max-width:560px"><button class="btn bad" id="pvdel" style="margin:0">Delete</button><button class="btn" id="pvclose" style="margin:0">Close</button></div></div>
+
 <div id="vp">
   <div id="stage"></div>
   <div id="vbar">
@@ -298,10 +324,18 @@ let script=LS.get("script",null)||DEFAULT_SCRIPT;
 const opt=Object.assign({metro:true,voice:false,wake:true,rounds:1,len:1,theme:"neon",accent:""},LS.get("opt",{}));
 
 /* ---------- storage (IndexedDB) ---------- */
-const dbp=new Promise((res,rej)=>{const r=indexedDB.open("joi",1);r.onupgradeneeded=()=>r.result.createObjectStore("m",{keyPath:"id"});r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});
-const db=(mode,fn)=>dbp.then(d=>new Promise((res,rej)=>{const t=d.transaction("m",mode),r=fn(t.objectStore("m"));t.oncomplete=()=>res(r&&r.result);t.onerror=()=>rej(t.error)}));
+const dbp=new Promise((res,rej)=>{const r=indexedDB.open("joi",2);r.onupgradeneeded=()=>{const d=r.result;for(const n of ["m","t"])if(!d.objectStoreNames.contains(n))d.createObjectStore(n,{keyPath:"id"})};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});
+const db=(mode,fn,store="m")=>dbp.then(d=>new Promise((res,rej)=>{const t=d.transaction(store,mode),r=fn(t.objectStore(store));t.oncomplete=()=>res(r&&r.result);t.onerror=()=>rej(t.error)}));
 let items=[];
-async function load(){try{items=(await db("readonly",s=>s.getAll()))||[]}catch(e){items=[];$("#status").textContent="Storage unavailable in this browser mode."}renderLib()}
+const thumbs=new Map();
+async function loadThumbs(){
+  thumbs.forEach(v=>URL.revokeObjectURL(v.url));thumbs.clear();
+  try{((await db("readonly",st=>st.getAll(),"t"))||[]).forEach(r=>thumbs.set(r.id,{url:URL.createObjectURL(r.thumb),dur:r.dur}))}catch(e){}
+}
+async function load(){
+  try{items=(await db("readonly",st=>st.getAll()))||[]}catch(e){items=[];$("#status").textContent="Storage unavailable in this browser mode."}
+  await loadThumbs();renderLib();fillThumbs();
+}
 
 /* ---------- tabs ---------- */
 $("#nav").onclick=e=>{const b=e.target.closest("button");if(!b)return;document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("on",x===b));document.querySelectorAll(".view").forEach(v=>v.classList.toggle("on",v.id===b.dataset.v));if(b.dataset.v==="rank")renderRank()};
@@ -316,17 +350,94 @@ function renderLib(){
     if([...f.options].some(o=>o.value===cur))f.value=cur;
   }
   $("#status").textContent=items.length?"":"Add some media in the Library tab first.";
-  const l=$("#list");l.innerHTML="";
-  if(!items.length){l.innerHTML='<p class="mut">Nothing here yet. Add videos or images above.</p>';return}
-  items.forEach(it=>{
-    const d=document.createElement("div");d.className="item";
-    const n=document.createElement("span");n.textContent=it.name;
-    const g=document.createElement("small");g.textContent=it.folder;
-    const x=document.createElement("button");x.textContent="✕";x.setAttribute("aria-label","Delete "+it.name);
-    x.onclick=async()=>{await db("readwrite",s=>s.delete(it.id));load()};
-    d.append(n,g,x);l.append(d);
+  if(lf!=="all"&&!folders().includes(lf))lf="all";
+  const sorted=[...items].sort((a,b)=>parseInt(b.id)-parseInt(a.id));
+  $("#lstat").textContent=items.length?`${items.length} clips · ${folders().length} folders`:"";
+  const ch=$("#chips");ch.innerHTML="";
+  for(const f of ["all",...folders()]){const b=document.createElement("button");b.type="button";b.textContent=f==="all"?"All":f;b.className=lf===f?"on":"";b.onclick=()=>{lf=f;shown=60;renderLib()};ch.append(b)}
+  const list=sorted.filter(i=>lf==="all"||i.folder===lf),rec=$("#rec");rec.innerHTML="";
+  if(lf==="all"&&items.length>6){const h=document.createElement("div");h.className="sub";h.textContent="Recently added";const row=document.createElement("div");row.className="rrow";sorted.slice(0,8).forEach(i=>row.append(tile(i)));rec.append(h,row)}
+  $("#lhead").textContent=items.length?(lf==="all"?"All clips":lf):"";
+  const g=$("#grid");g.innerHTML="";
+  if(!items.length)g.innerHTML='<p class="mut" style="grid-column:1/-1">Nothing here yet. Add videos or images above.</p>';
+  list.slice(0,shown).forEach(i=>g.append(tile(i)));
+  $("#more").style.display=list.length>shown?"block":"none";
+  $("#delf").style.display=lf!=="all"?"block":"none";
+}
+let lf="all",shown=60;
+const fmt=d=>d>0&&d<1e5?Math.floor(d/60)+":"+String(Math.floor(d%60)).padStart(2,"0"):"";
+function tile(it){
+  const b=document.createElement("button");b.type="button";b.className="tl";b.dataset.id=it.id;b.setAttribute("aria-label","Preview "+it.name);
+  b.innerHTML='<span class="ph"></span><img alt="" style="display:none"><span class="du"></span><span class="nm"></span>';
+  b.querySelector(".ph").textContent=isImg(it)?"🖼️":"🎞️";b.querySelector(".nm").textContent=it.name;
+  b.onclick=()=>openPv(it);if(thumbs.has(it.id))setThumb(b,it.id);return b;
+}
+function setThumb(b,id){
+  const th=thumbs.get(id),im=b.querySelector("img");im.src=th.url;im.style.display="block";
+  b.querySelector(".ph").style.display="none";
+  const d=b.querySelector(".du"),t=fmt(th.dur);d.textContent=t;d.style.display=t?"block":"none";
+}
+/* thumbnails: one frame per clip, made once in the background and saved */
+function snap(blob,img){
+  return new Promise(res=>{
+    const u=URL.createObjectURL(blob),el=img?new Image():document.createElement("video");let fin=false;
+    const done=ok=>{
+      if(fin)return;fin=true;
+      try{
+        if(ok){
+          const sw=el.videoWidth||el.naturalWidth,sh=el.videoHeight||el.naturalHeight,c=document.createElement("canvas");c.width=c.height=240;
+          const k=Math.max(240/sw,240/sh);c.getContext("2d").drawImage(el,(240-sw*k)/2,(240-sh*k)/2,sw*k,sh*k);
+          c.toBlob(b=>{URL.revokeObjectURL(u);if(!img){el.removeAttribute("src");el.load()}res(b?{thumb:b,dur:img?0:el.duration||0}:null)},"image/jpeg",.72);return;
+        }
+      }catch(e){}
+      URL.revokeObjectURL(u);res(null);
+    };
+    if(img){el.onload=()=>done(1);el.onerror=()=>done(0);el.src=u}
+    else{
+      el.muted=true;el.playsInline=true;el.preload="auto";
+      el.onloadedmetadata=()=>{el.currentTime=Math.min(1,(el.duration||2)/3)};
+      el.onseeked=()=>done(1);el.onerror=()=>done(0);el.src=u;setTimeout(()=>done(0),7000);
+    }
   });
 }
+let fillRun=false;
+async function fillThumbs(){
+  if(fillRun)return;fillRun=true;
+  for(const it of items){
+    if(thumbs.has(it.id)||it.noThumb)continue;
+    const r=await snap(it.blob,isImg(it));
+    if(!r){it.noThumb=true;continue}
+    thumbs.set(it.id,{url:URL.createObjectURL(r.thumb),dur:r.dur});
+    try{await db("readwrite",st=>st.put({id:it.id,thumb:r.thumb,dur:r.dur}),"t")}catch(e){}
+    document.querySelectorAll('.tl[data-id="'+it.id+'"]').forEach(b=>setThumb(b,it.id));
+  }
+  fillRun=false;
+}
+async function delItem(id){
+  await db("readwrite",st=>st.delete(id));await db("readwrite",st=>st.delete(id),"t");
+  const t=thumbs.get(id);if(t){URL.revokeObjectURL(t.url);thumbs.delete(id)}
+}
+/* preview */
+let pvUrl=null,pvItem=null;
+function openPv(it){
+  pvItem=it;pvUrl=URL.createObjectURL(it.blob);const box=$("#pvm");box.innerHTML="";
+  let m;if(isImg(it))m=new Image();else{m=document.createElement("video");m.controls=true;m.autoplay=true;m.loop=true;m.playsInline=true;m.setAttribute("playsinline","")}
+  m.src=pvUrl;box.append(m);$("#pvt").textContent=it.name+" · "+it.folder;$("#pv").classList.add("on");
+}
+function closePv(){
+  const v=$("#pvm").querySelector("video");if(v){v.pause();v.removeAttribute("src");v.load()}
+  $("#pvm").innerHTML="";if(pvUrl)URL.revokeObjectURL(pvUrl);pvUrl=null;pvItem=null;$("#pv").classList.remove("on");
+}
+$("#pvclose").onclick=closePv;
+$("#pvdel").onclick=async()=>{if(!pvItem||!confirm("Delete this clip from your library?"))return;const id=pvItem.id;closePv();await delItem(id);load()};
+$("#more").onclick=()=>{shown+=60;renderLib()};
+$("#delf").onclick=async()=>{
+  const n=items.filter(i=>i.folder===lf).length;
+  if(!confirm(`Delete the folder "${lf}" and its ${n} clips?`))return;
+  for(const i of items.filter(i=>i.folder===lf))await delItem(i.id);
+  lf="all";load();
+};
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&$("#pv").classList.contains("on"))closePv()});
 async function importFiles(list){
   list=[...list];
   const ok=list.filter(f=>/^(video|image)\//.test(f.type)||/\.(mp4|webm|mov|m4v|mkv|gif|jpe?g|png|webp)$/i.test(f.name));
