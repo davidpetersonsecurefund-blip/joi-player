@@ -142,10 +142,29 @@ h2{font-family:var(--disp);font-weight:400;font-size:1.55rem;text-transform:uppe
 #pv{position:fixed;inset:0;z-index:150;background:#000e;display:none;flex-direction:column;align-items:center;justify-content:center;padding:14px;gap:10px}#pv.on{display:flex}
 #pvm{width:100%;max-width:560px;display:flex;justify-content:center}#pvm video,#pvm img{max-width:100%;max-height:68dvh;border-radius:12px}
 #pvt{font-size:.85rem;color:var(--mut);max-width:560px;width:100%;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-@media (prefers-reduced-motion:reduce){*{transition:none!important}.logo span,.tk{animation:none!important}.ov::after,.warp .tile{animation:none!important}}
+#heat{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.22;background:radial-gradient(ellipse at 50% 115%,#ff0a78cc,transparent 62%),radial-gradient(ellipse at 50% -15%,#b0002f99,transparent 55%)}
+header#top,main,.ticker{position:relative;z-index:1}
+.hb{position:absolute;left:14px;right:14px;bottom:1px;height:2px;background:#2a0a24;border-radius:2px}
+.hb i{display:block;height:100%;width:8%;background:linear-gradient(90deg,var(--pink),var(--cyan));box-shadow:0 0 8px var(--pink);transition:width 1s}
+#intro{position:fixed;inset:0;z-index:190;background:#050005;display:none;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:24px;text-align:center;overflow:hidden}
+.breathe{position:absolute;width:75vmin;height:75vmin;border-radius:50%;background:radial-gradient(circle,#ff0a78aa,#b0002f33 45%,transparent 68%);animation:breathe 5s ease-in-out infinite}
+@keyframes breathe{0%,100%{transform:scale(.8);opacity:.45}50%{transform:scale(1.15);opacity:1}}
+#intro>*:not(.breathe){position:relative}
+.il p{font:400 clamp(1.6rem,7vw,2.4rem) var(--disp);letter-spacing:.04em;text-transform:uppercase;margin:6px 0;opacity:0;animation:fin 1.4s ease forwards}
+.il p:nth-child(1){animation-delay:.6s}.il p:nth-child(2){animation-delay:1.7s}.il p:nth-child(3){animation-delay:2.8s}
+.ib{width:100%;max-width:340px;opacity:0;animation:fin 1.2s ease 3.6s forwards}
+@keyframes fin{to{opacity:1}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}.il p,.ib{opacity:1!important}.breathe{opacity:.7}.logo span,.tk,.breathe{animation:none!important}.ov::after,.warp .tile{animation:none!important}}
 </style>
 </head>
 <body>
+<div id="heat"></div>
+<div id="intro">
+  <div class="breathe"></div>
+  <div class="logo" style="font-size:3rem">JOI<span>HUB</span></div>
+  <div class="il"><p>Welcome back.</p><p>Lock the door.</p><p>Take your time.</p></div>
+  <div class="ib"><button class="btn" id="ientr">Enter</button><button class="btn alt" id="iquiet">Enter silently</button></div>
+</div>
 <div id="gate">
   <div class="logo" style="font-size:3.2rem">JOI<span>HUB</span></div>
   <span class="age">18+ ONLY</span>
@@ -153,7 +172,7 @@ h2{font-family:var(--disp);font-weight:400;font-size:1.55rem;text-transform:uppe
   <button class="btn" id="enter">I am 18 or older. Enter</button>
   <button class="btn alt" id="leave">Leave</button>
 </div>
-<header id="top"><div class="logo">JOI<span>HUB</span></div><span class="age">18+</span><span class="chip" id="chip">Lv 1</span></header>
+<header id="top"><div class="logo">JOI<span>HUB</span></div><span class="age">18+</span><span class="chip" id="chip">Lv 1</span><div class="hb"><i id="hbar"></i></div></header>
 <div class="ticker"><div class="tk" id="tk"></div></div>
 <nav id="nav">
   <button class="on" data-v="play">Play</button>
@@ -260,6 +279,12 @@ h2{font-family:var(--disp);font-weight:400;font-size:1.55rem;text-transform:uppe
       <label class="chk"><input type="checkbox" id="o-metro"> Metronome clicks</label>
       <label class="chk"><input type="checkbox" id="o-voice"> Read instructions aloud</label>
       <label class="chk"><input type="checkbox" id="o-wake"> Keep screen awake</label>
+      <div class="sub" style="margin-top:14px">Atmosphere</div>
+      <label class="chk"><input type="checkbox" id="o-glow"> Pulsing glow that builds the longer you stay</label>
+      <label class="chk"><input type="checkbox" id="o-amb"> Ambient hum and breathing</label>
+      <label class="chk"><input type="checkbox" id="o-beat"> Heartbeat sound</label>
+      <label class="chk"><input type="checkbox" id="o-haptic"> Vibrate with the heartbeat (Android)</label>
+      <label>Atmosphere volume<select id="o-vol"><option value="0.3">Low</option><option value="0.6">Medium</option><option value="1">High</option></select></label>
       <label>Session length<select id="o-rounds"><option value="0.5">Short (half)</option><option value="1">Normal</option><option value="1.5">Long (1.5x)</option><option value="2">Marathon (2x)</option></select></label>
       <label>Phase length<select id="o-len"><option value="0.7">Quick</option><option value="1">Normal</option><option value="1.5">Slow</option></select></label>
       <label>Theme<select id="o-theme"><option value="neon">Neon</option><option value="ember">Ember</option><option value="ocean">Ocean</option><option value="toxic">Toxic</option><option value="mono">Mono</option></select></label>
@@ -321,7 +346,7 @@ const DEFAULT_SCRIPT={
   forfeits:[{title:"Forfeit",desc:"Session over. Take a cold shower."},{title:"Forfeit",desc:"Session over. Walk away for ten minutes."}]
 };
 let script=LS.get("script",null)||DEFAULT_SCRIPT;
-const opt=Object.assign({metro:true,voice:false,wake:true,rounds:1,len:1,theme:"neon",accent:""},LS.get("opt",{}));
+const opt=Object.assign({metro:true,voice:false,wake:true,glow:true,amb:true,beat:true,haptic:false,vol:.6,rounds:1,len:1,theme:"neon",accent:""},LS.get("opt",{}));
 
 /* ---------- storage (IndexedDB) ---------- */
 const dbp=new Promise((res,rej)=>{const r=indexedDB.open("joi",2);r.onupgradeneeded=()=>{const d=r.result;for(const n of ["m","t"])if(!d.objectStoreNames.contains(n))d.createObjectStore(n,{keyPath:"id"})};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});
@@ -606,7 +631,7 @@ document.addEventListener("keydown",e=>{if(!S)return;if(e.key==="f"||e.key==="F"
 document.addEventListener("visibilitychange",()=>{if(S&&!document.hidden&&opt.wake&&navigator.wakeLock&&!wake)navigator.wakeLock.request("screen").then(w=>wake=w).catch(()=>{});if(S&&document.hidden)$("#v").pause();else if(S&&!S.over)$("#v").play().catch(()=>{})});
 
 /* ---------- settings ---------- */
-["metro","voice","wake"].forEach(k=>{const c=$("#o-"+k);c.checked=opt[k];c.onchange=()=>{opt[k]=c.checked;LS.set("opt",opt)}});
+["metro","voice","wake","glow","amb","beat","haptic"].forEach(k=>{const c=$("#o-"+k);c.checked=opt[k];c.onchange=()=>{opt[k]=c.checked;LS.set("opt",opt)}});
 const THEMES={neon:["#ff0a78","#ffc400","#b0002f"],ember:["#ff5a1f","#ffd23f","#c1121f"],ocean:["#00b4ff","#00ffd5","#3a2bff"],toxic:["#7dff00","#00ffa6","#00a86b"],mono:["#e8e8e8","#9aa0a6","#555555"]};
 function applyTheme(){const t=THEMES[opt.theme]||THEMES.neon,r=document.documentElement.style;r.setProperty("--pink",opt.accent||t[0]);r.setProperty("--cyan",t[1]);r.setProperty("--vio",t[2])}
 for(const [k,id] of [["rounds","#o-rounds"],["len","#o-len"],["theme","#o-theme"]]){const el=$(id);el.value=String(opt[k]);el.onchange=()=>{opt[k]=k==="theme"?el.value:+el.value;LS.set("opt",opt);applyTheme()}}
@@ -756,8 +781,9 @@ $("#aspects").onclick=e=>{const b=e.target.closest("button");if(b&&V&&V.fr){V.as
 document.addEventListener("keydown",e=>{if(V&&e.key==="Escape")vStop()});
 
 /* ---------- site chrome ---------- */
-if(LS.get("age18",false))$("#gate").style.display="none";
-$("#enter").onclick=()=>{LS.set("age18",true);$("#gate").style.display="none"};
+function showIntro(){$("#intro").style.display="flex"}
+if(LS.get("age18",false)){$("#gate").style.display="none";showIntro()}
+$("#enter").onclick=()=>{LS.set("age18",true);$("#gate").style.display="none";showIntro()};
 $("#leave").onclick=()=>{location.href="https://www.google.com"};
 {const w=["ADULTS ONLY","EDGE","DENY","OBEY","REPEAT","100% PRIVATE","STAYS ON YOUR DEVICE","ZERO ADS","ZERO TRACKING","NO LIMITS"],h=w.map(x=>`<i>${x}</i>`).join("");$("#tk").innerHTML=h+h}
 const EMO={standard:"🔥",extended:"⏳",escalation:"📈",roulette:"🎲",nnn:"🧱",gauntlet:"⚔️",slowburn:"🕯️",cam:"📹",strobeS:"💡",strobeF:"⚡",overdose:"☠️",subliminal:"👁️",blackout:"🌑",hijack:"📼",vip:"🥂",xerox:"🖨️",cyber:"🌐",hypno:"🌀",wall:"🔲",overdrive:"🚀",hypnowall:"🔮",gooncave:"🕳️"};
@@ -772,6 +798,62 @@ function cardify(sel,box){
   [...S.children].forEach(c=>{if(c.tagName==="OPTGROUP"){const g=document.createElement("div");g.className="grp";g.textContent=c.label;B.append(g);[...c.children].forEach(add)}else add(c)});
 }
 cardify("mode","mc");cardify("vmode","vmc");
+
+/* ---------- atmosphere: heartbeat, glow, hum, breathing; builds with time on site ---------- */
+let master=null,amb=null,beatT=null;const tSite=Date.now(),heatEl=$("#heat"),busy=()=>!!(S||V);
+function atmoInit(){
+  ac=ac||new (window.AudioContext||window.webkitAudioContext)();if(ac.state==="suspended")ac.resume();
+  if(!master){master=ac.createGain();master.gain.value=opt.vol;master.connect(ac.destination)}
+}
+function thump(f,vol,t){
+  const o=ac.createOscillator(),g=ac.createGain();o.type="sine";
+  o.frequency.setValueAtTime(f,t);o.frequency.exponentialRampToValueAtTime(f*.55,t+.14);
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+.01);g.gain.exponentialRampToValueAtTime(.001,t+.22);
+  o.connect(g).connect(master);o.start(t);o.stop(t+.25);
+}
+function startDrone(){
+  const o1=ac.createOscillator(),o2=ac.createOscillator(),f=ac.createBiquadFilter(),g=ac.createGain();
+  o1.type=o2.type="sawtooth";o1.frequency.value=55;o2.frequency.value=55.45;f.type="lowpass";f.frequency.value=240;g.gain.value=.05;
+  o1.connect(f);o2.connect(f);f.connect(g).connect(master);o1.start();o2.start();
+  const len=ac.sampleRate*2,buf=ac.createBuffer(1,len,ac.sampleRate),d=buf.getChannelData(0);
+  for(let i=0;i<len;i++)d[i]=Math.random()*2-1;
+  const n=ac.createBufferSource();n.buffer=buf;n.loop=true;
+  const bp=ac.createBiquadFilter();bp.type="bandpass";bp.frequency.value=700;bp.Q.value=.7;
+  const bg=ac.createGain();bg.gain.value=.03;
+  const lfo=ac.createOscillator(),lg=ac.createGain();lfo.frequency.value=.22;lg.gain.value=.025;lfo.connect(lg).connect(bg.gain);
+  n.connect(bp).connect(bg).connect(master);n.start();lfo.start();amb=[o1,o2,n,lfo];
+}
+function stopDrone(){if(amb)amb.forEach(x=>{try{x.stop()}catch(e){}});amb=null}
+function heartLoop(){
+  clearTimeout(beatT);
+  const heat=Math.min(1,(Date.now()-tSite)/600000),per=60000/(62+heat*38),quiet=document.hidden||busy();
+  if(master)master.gain.setTargetAtTime(quiet?0:opt.vol,ac.currentTime,.4);
+  if(!quiet){
+    if(opt.glow&&!calm){const b=.16+heat*.22,pk=b+.32+heat*.18;heatEl.animate([{opacity:b},{opacity:pk,offset:.07},{opacity:b+.08,offset:.18},{opacity:pk*.8,offset:.3},{opacity:b}],{duration:per})}
+    if(opt.beat&&master){const t=ac.currentTime+.02;thump(58,.9,t);thump(48,.55,t+.15)}
+    if(opt.haptic&&navigator.vibrate)navigator.vibrate([35,110,25]);
+  }
+  $("#hbar").style.width=(8+heat*92)+"%";
+  beatT=setTimeout(heartLoop,per);
+}
+function enterSite(sound){
+  opt.amb=opt.beat=sound;LS.set("opt",opt);
+  ["amb","beat"].forEach(k=>$("#o-"+k).checked=opt[k]);
+  $("#intro").style.display="none";
+  if(sound){atmoInit();startDrone()}
+  heartLoop();
+}
+$("#ientr").onclick=()=>enterSite(true);
+$("#iquiet").onclick=()=>enterSite(false);
+for(const k of ["amb","beat"])$("#o-"+k).addEventListener("change",()=>{
+  if(opt.amb||opt.beat)atmoInit();
+  if(opt.amb&&!amb&&master)startDrone();if(!opt.amb)stopDrone();
+});
+$("#o-vol").value=String(opt.vol);$("#o-vol").onchange=e=>{opt.vol=+e.target.value;LS.set("opt",opt)};
+document.addEventListener("visibilitychange",()=>{if(!document.hidden&&$("#intro").style.display==="none")heartLoop()});
+{const L=["You've been thinking about this all day.","Nobody's watching. Take your time.","Slow down. The wait is part of it.","Tonight you follow the rules.","Good things come to those who wait.","Don't rush. Don't stop. Don't finish."],el=document.querySelector(".hero-s");
+ let k=0;el.textContent=L[0];el.style.transition="opacity .8s";
+ setInterval(()=>{el.style.opacity=0;setTimeout(()=>{k=(k+1)%L.length;el.textContent=L[k];el.style.opacity=1},800)},7000)}
 
 renderRank();load();
 if("serviceWorker" in navigator&&location.protocol==="https:"){/* optional: add a sw.js later for offline use */}
