@@ -142,6 +142,21 @@ h2{font-family:var(--disp);font-weight:400;font-size:1.55rem;text-transform:uppe
 #pv{position:fixed;inset:0;z-index:150;background:#000e;display:none;flex-direction:column;align-items:center;justify-content:center;padding:14px;gap:10px}#pv.on{display:flex}
 #pvm{width:100%;max-width:560px;display:flex;justify-content:center}#pvm video,#pvm img{max-width:100%;max-height:68dvh;border-radius:12px}
 #pvt{font-size:.85rem;color:var(--mut);max-width:560px;width:100%;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fh{position:relative;aspect-ratio:16/10;border-radius:16px;overflow:hidden;border:1px solid var(--pink);box-shadow:0 0 30px #ff0a7844;margin-bottom:12px;background:#000}
+.fh video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.fh .tx{position:absolute;left:0;right:0;bottom:0;padding:44px 12px 12px;background:linear-gradient(transparent,#000d)}
+.fh small,.dc small{font:400 .85rem var(--disp);letter-spacing:.14em;text-transform:uppercase;color:var(--cyan)}
+.fh b{display:block;font:400 1.4rem var(--disp);letter-spacing:.03em;text-transform:uppercase;margin:2px 0 8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fh .row .btn{margin:0;min-height:44px;font-size:1rem}
+.sg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.sb{padding:12px 6px;text-align:center;border-radius:12px;background:#140614;border:1px solid var(--line)}
+.sb b{display:block;font:400 1.5rem var(--disp);line-height:1.15}.sb small{color:var(--mut);font-size:.7rem}
+.dc{padding:14px;border-radius:14px;margin-bottom:12px;border:1px solid var(--cyan);background:linear-gradient(120deg,#ffc40022,#0c040d);box-shadow:0 0 20px #ffc40022}
+.dc b{display:block;font:400 1.5rem var(--disp);text-transform:uppercase;margin:2px 0}
+.qs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px}
+.qb{padding:12px;min-height:70px;border-radius:12px;border:1px solid var(--line);background:#140614;color:#fff;text-align:left;font:400 1.05rem var(--disp);letter-spacing:.05em;text-transform:uppercase}
+.qb em{display:block;font-style:normal;font-size:1.4rem;margin-bottom:2px}.qb:active{border-color:var(--pink)}
+.step{display:flex;gap:10px;align-items:center;margin:10px 0}.step i{flex:0 0 32px;height:32px;border-radius:50%;background:var(--pink);display:flex;align-items:center;justify-content:center;font:400 1rem var(--disp);font-style:normal}
 #reel{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;opacity:0;transition:opacity .7s;pointer-events:none}
 .box{background:linear-gradient(#160717ea,#0c040dea)}
 .tl{-webkit-touch-callout:none;user-select:none;-webkit-user-select:none}
@@ -386,7 +401,7 @@ async function load(){
 }
 
 /* ---------- tabs ---------- */
-$("#nav").onclick=e=>{const b=e.target.closest("button");if(!b)return;document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("on",x===b));document.querySelectorAll(".view").forEach(v=>v.classList.toggle("on",v.id===b.dataset.v));if(b.dataset.v==="rank")renderRank();if(b.dataset.v==="home")renderHome()};
+$("#nav").onclick=e=>{const b=e.target.closest("button");if(!b)return;document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("on",x===b));document.querySelectorAll(".view").forEach(v=>v.classList.toggle("on",v.id===b.dataset.v));heroStop();if(b.dataset.v==="rank")renderRank();if(b.dataset.v==="home")renderHome()};
 
 /* ---------- favorites, tags, taste ---------- */
 let meta=LS.get("meta",{});const DEF={fav:0,tags:[],plays:0,last:0},seenNow=new Set();let msT=null;
@@ -396,20 +411,76 @@ function seen(it){if(seenNow.has(it.id))return;seenNow.add(it.id);const m=mget(i
 const allTags=()=>[...new Set(items.flatMap(i=>mm(i.id).tags))].sort();
 function poolFor(f){return items.filter(i=>f==="all"||(f==="fav"?mm(i.id).fav:f.startsWith("tag:")?mm(i.id).tags.includes(f.slice(4)):i.folder===f))}
 const lab=f=>f==="fav"?"★ Favorites":f.startsWith("tag:")?"#"+f.slice(4):f;
-function homeRow(title,list,box){
+const used=new Set(),go=v=>document.querySelector('#nav button[data-v="'+v+'"]').click();
+const DMODES=["standard","escalation","roulette","gauntlet","slowburn","nnn","extended"];
+function dailyQ(){const day=new Date().toLocaleDateString("en-CA"),d=LS.get("daily",{});return{mode:DMODES[Math.floor(Date.now()/864e5)%7],day,done:d.d===day&&!!d.done}}
+function syncCards(){document.querySelectorAll(".mc").forEach(b=>{const sel=b.parentElement.id==="mc"?$("#mode"):$("#vmode");b.classList.toggle("on",sel.value===b.dataset.v)})}
+function quick(mode,vis,folder){
+  if(!items.length){go("lib");return}
+  folder=folder||"all";
+  if(vis){$("#vfolder").value=folder;$("#vmode").value=vis;syncCards();vStart()}
+  else{$("#folder").value=folder;$("#mode").value=mode;syncCards();startSession()}
+}
+let hero=null;
+function heroStop(){if(!hero)return;hero.v.pause();hero.v.removeAttribute("src");hero.v.load();URL.revokeObjectURL(hero.u);hero=null}
+function heroMake(box){
+  const vids=items.filter(i=>!isImg(i));
+  if(!vids.length||S||V||!$("#home").classList.contains("on"))return;
+  const it=pick(vids),u=URL.createObjectURL(it.blob),w=document.createElement("div"),v=document.createElement("video");
+  w.className="fh";v.muted=true;v.loop=true;v.playsInline=true;v.setAttribute("playsinline","");v.src=u;
+  v.addEventListener("loadedmetadata",()=>{if(v.duration>8)v.currentTime=v.duration*(.1+Math.random()*.6)});v.play().catch(()=>{});
+  const tx=document.createElement("div");tx.className="tx";
+  tx.innerHTML='<small>Featured tonight</small><b></b><div class="row"><button class="btn" type="button">Watch</button><button class="btn alt" type="button">Shuffle</button></div>';
+  tx.querySelector("b").textContent=it.name;
+  const bs=tx.querySelectorAll("button");bs[0].onclick=()=>openPv(it);bs[1].onclick=renderHome;
+  w.append(v,tx);box.append(w);hero={v,u};seen(it);
+}
+function homeRow(title,list,box,dd){
+  if(dd)list=list.filter(i=>!used.has(i.id));
   if(!list.length)return;
   const h=document.createElement("div"),r=document.createElement("div");h.className="sub";h.textContent=title;r.className="rrow";
-  list.slice(0,12).forEach(i=>r.append(tile(i)));box.append(h,r);
+  list.slice(0,12).forEach(i=>{used.add(i.id);r.append(tile(i))});box.append(h,r);
+}
+function folderTile(name){
+  const list=items.filter(i=>i.folder===name),c=list.find(i=>thumbs.has(i.id)),b=document.createElement("div");
+  b.className="tl";b.tabIndex=0;b.setAttribute("role","button");
+  b.innerHTML='<span class="ph">📁</span><img alt="" style="display:none"><span class="nm"></span>';
+  b.querySelector(".nm").textContent=name+" · "+list.length;
+  if(c){const im=b.querySelector("img");im.src=thumbs.get(c.id).url;im.style.display="block";b.querySelector(".ph").style.display="none"}
+  b.onclick=()=>{lf=name;shown=60;go("lib");renderLib()};return b;
 }
 function renderHome(){
-  const box=$("#rows");if(!box)return;box.innerHTML="";
-  if(!items.length){box.innerHTML='<div class="box"><p class="mut">Nothing here yet. Add clips in the Library tab, heart the ones you love, give them tags, and this page fills with rows made for you.</p></div>';return}
-  homeRow("Your favorites",items.filter(i=>mm(i.id).fav),box);
-  homeRow("Played recently",items.filter(i=>mm(i.id).plays).sort((a,b)=>mm(b.id).last-mm(a.id).last),box);
-  homeRow("You haven't seen these",items.filter(i=>!mm(i.id).plays).sort(()=>Math.random()-.5),box);
+  const box=$("#rows");if(!box)return;heroStop();box.innerHTML="";used.clear();
+  const L=lvl(prof.xp),R=RANKS[Math.min(Math.floor((L-1)/2),RANKS.length-1)],day=new Date().toLocaleDateString("en-CA"),yday=new Date(Date.now()-864e5).toLocaleDateString("en-CA"),sk=LS.get("streak",{n:0,last:""}),sn=sk.last===day||sk.last===yday?sk.n:0;
+  const sg=document.createElement("div");sg.className="sg";
+  sg.innerHTML='<div class="sb"><b></b><small>day streak</small></div><div class="sb"><b></b><small>rank</small></div><div class="sb"><b></b><small>XP to next level</small></div>';
+  const bb=sg.querySelectorAll("b");bb[0].textContent="🔥 "+sn;bb[1].textContent="Lv "+L;bb[1].style.color=R[1];bb[2].textContent=50*L*L-prof.xp;
+  if(!items.length){
+    box.append(sg);
+    const c=document.createElement("div");c.className="box";
+    c.innerHTML='<b style="font:400 1.3rem var(--disp);text-transform:uppercase">Let\'s get you set up</b><div class="step"><i>1</i><span>Add your clips: pick files or a whole folder.</span></div><div class="step"><i>2</i><span>Heart your favorites and tag them.</span></div><div class="step"><i>3</i><span>Hit start. This page learns your taste.</span></div><button class="btn" type="button">Add clips</button>';
+    c.querySelector("button").onclick=()=>go("lib");box.append(c);return;
+  }
+  heroMake(box);box.append(sg);
+  const dq=dailyQ(),dl=([...$("#mode").options].find(o=>o.value===dq.mode)||{text:dq.mode}).text.replace(/ \(.*\)$/,""),dc=document.createElement("div");
+  dc.className="dc";dc.innerHTML='<small>Daily challenge</small><b></b><div class="mut"></div><button class="btn" type="button" style="min-height:48px;font-size:1.1rem"></button>';
+  dc.querySelector("b").textContent=dl;
+  dc.querySelector(".mut").textContent=dq.done?"Completed today. Come back tomorrow.":"Finish this mode today for +75 bonus XP.";
+  const db1=dc.querySelector("button");db1.textContent=dq.done?"Play again":"Accept";db1.onclick=()=>quick(dq.mode);box.append(dc);
+  const favs=poolFor("fav"),qs=document.createElement("div");qs.className="qs";
+  const Q=[["🎲","Surprise me",()=>quick(pick(DMODES))],["📹","Camcorder",()=>quick(null,"cam")],["🚀","Overdrive wall",()=>quick(null,"overdrive")],favs.length?["★","Favorites session",()=>quick("standard",null,"fav")]:["🌀","Hypno swirl",()=>quick(null,"hypno")]];
+  Q.forEach(([e,t,f])=>{const b=document.createElement("button");b.type="button";b.className="qb";b.innerHTML="<em></em>";b.firstChild.textContent=e;b.append(t);b.onclick=f;qs.append(b)});
+  box.append(qs);
+  homeRow("Your favorites",favs,box);
   const w={};items.forEach(i=>{const m=mm(i.id);m.tags.forEach(t=>w[t]=(w[t]||0)+(m.fav?3:0)+Math.min(m.plays,5))});
-  Object.entries(w).sort((a,b)=>b[1]-a[1]).slice(0,2).forEach(([t])=>homeRow("Because you like #"+t,items.filter(i=>mm(i.id).tags.includes(t)&&!mm(i.id).fav),box));
-  if(!box.children.length)box.innerHTML='<div class="box"><p class="mut">Open any clip in the Library and tap the heart or add a tag to teach this page your taste.</p></div>';
+  Object.entries(w).sort((a,b)=>b[1]-a[1]).slice(0,2).forEach(([t])=>homeRow("Because you like #"+t,items.filter(i=>mm(i.id).tags.includes(t)&&!mm(i.id).fav),box,1));
+  homeRow("Played recently",items.filter(i=>mm(i.id).plays).sort((a,b)=>mm(b.id).last-mm(a.id).last),box,1);
+  homeRow("You haven't seen these",items.filter(i=>!mm(i.id).plays).sort(()=>Math.random()-.5),box,1);
+  if(folders().length>1){const h=document.createElement("div"),r=document.createElement("div");h.className="sub";h.textContent="Your folders";r.className="rrow";folders().forEach(n=>r.append(folderTile(n)));box.append(h,r)}
+  homeRow("Fresh picks",[...items].sort(()=>Math.random()-.5),box,1);
+  homeRow("Quick hits",items.filter(i=>{const t=thumbs.get(i.id);return t&&t.dur>0&&t.dur<45}),box,1);
+  homeRow("Long watches",items.filter(i=>{const t=thumbs.get(i.id);return t&&t.dur>180&&t.dur<1e5}),box,1);
+  homeRow("Recently added",[...items].sort((a,b)=>parseInt(b.id)-parseInt(a.id)),box,1);
 }
 
 /* ---------- library ---------- */
@@ -657,7 +728,7 @@ function startSession(){
   ac=ac||new (window.AudioContext||window.webkitAudioContext)();if(ac.state==="suspended")ac.resume();
   S={bag:mkBag(pool),mode:$("#mode").value,n:0,fails:0,t:null,sec:0,start:Date.now(),st:null,bpm:60,over:false};
   S.total=S.mode==="nnn"||S.mode==="gauntlet"?MODE_TOTAL[S.mode]:Math.max(4,Math.round(MODE_TOTAL[S.mode]*opt.rounds));
-  musicPlay();$("#player").classList.add("on");$("#sheet").classList.remove("on");
+  heroStop();musicPlay();$("#player").classList.add("on");$("#sheet").classList.remove("on");
   if(opt.wake&&navigator.wakeLock)navigator.wakeLock.request("screen").then(w=>wake=w).catch(()=>{});
   next();
 }
@@ -709,12 +780,16 @@ function end(){
   if(!S)return;
   clearInterval(S.t);setBpm(0);speechSynthesis&&speechSynthesis.cancel&&speechSynthesis.cancel();musicStop();
   const secs=Math.floor((Date.now()-S.start)/1000);
-  const gain=Math.max(0,Math.floor(secs/6)+(S.done?50:0)-S.fails*10);
+  const day=new Date().toLocaleDateString("en-CA"),yday=new Date(Date.now()-864e5).toLocaleDateString("en-CA"),sk=LS.get("streak",{n:0,last:""});
+  let bonus=0;
+  if(secs>=60&&sk.last!==day){sk.n=sk.last===yday?sk.n+1:1;sk.last=day;LS.set("streak",sk);bonus+=Math.min(50,sk.n*5)}
+  const dq=dailyQ();if(S.done&&S.mode===dq.mode&&!dq.done){bonus+=75;LS.set("daily",{d:day,done:true})}
+  const gain=Math.max(0,Math.floor(secs/6)+(S.done?50:0)-S.fails*10)+bonus;
   prof.xp+=gain;prof.sessions++;prof.best=Math.max(prof.best,secs);prof.fails+=S.fails;if(S.done)prof.finishes++;
   LS.set("prof",prof);
   const v=$("#v");v.pause();v.removeAttribute("src");if(curUrl){URL.revokeObjectURL(curUrl);curUrl=null}
   if(wake){wake.release().catch(()=>{});wake=null}
-  $("#player").className="";S=null;renderRank();
+  $("#player").className="";S=null;renderRank();renderHome();
   $("#status").textContent=`Last session: ${Math.floor(secs/60)}m ${secs%60}s · +${gain} XP`;
 }
 $("#go").onclick=startSession;
@@ -782,7 +857,7 @@ function vStart(){
   $("#vstatus").textContent="";
   const fx=FX[$("#vmode").value];
   V={fx,pool:p,bag:mkBag(p),cap:+$("#vcap").value,asp:"r45",li:0,last:null};
-  musicPlay();$("#vp").classList.add("on");
+  heroStop();musicPlay();$("#vp").classList.add("on");
   $("#aspects").style.display=fx.grid?"none":"flex";
   $("#nextlay").style.display=fx.grid?"block":"none";
   if(opt.wake&&navigator.wakeLock)navigator.wakeLock.request("screen").then(w=>wake=w).catch(()=>{});
@@ -794,7 +869,7 @@ function vStop(){
   freeVideos($("#stage"));$("#stage").innerHTML="";
   urls.forEach(u=>URL.revokeObjectURL(u));urls.clear();
   if(wake){wake.release().catch(()=>{});wake=null}
-  musicStop();$("#vp").classList.remove("on");V=null;
+  musicStop();$("#vp").classList.remove("on");V=null;renderHome();
 }
 function camStart(){
   const x=V.fx,fr=document.createElement("div");fr.className="frame "+V.asp;V.fr=fr;
@@ -885,7 +960,7 @@ const EMO={standard:"🔥",extended:"⏳",escalation:"📈",roulette:"🎲",nnn:
 function cardify(sel,box){
   const S=$("#"+sel),B=$("#"+box);
   const add=o=>{
-    const k=o.text.indexOf(" ("),t=k>0?o.text.slice(0,k):o.text,sub=k>0?o.text.slice(k+2).replace(/[)]$/,""):"",b=document.createElement("button");b.type="button";b.className="mc"+(S.value===o.value?" on":"");
+    const k=o.text.indexOf(" ("),t=k>0?o.text.slice(0,k):o.text,sub=k>0?o.text.slice(k+2).replace(/[)]$/,""):"",b=document.createElement("button");b.type="button";b.dataset.v=o.value;b.className="mc"+(S.value===o.value?" on":"");
     b.innerHTML=`<em>${EMO[o.value]||"🔥"}</em>`;b.append(t);if(sub){const m=document.createElement("small");m.textContent=sub;b.append(m)}
     b.onclick=()=>{S.value=o.value;B.querySelectorAll(".mc").forEach(x=>x.classList.toggle("on",x===b))};
     B.append(b);
@@ -988,6 +1063,7 @@ document.addEventListener("visibilitychange",()=>{if(!document.hidden&&$("#intro
  let k=0;el.textContent=L[0];el.style.transition="opacity .8s";
  setInterval(()=>{el.style.opacity=0;setTimeout(()=>{k=(k+1)%L.length;el.textContent=L[k];el.style.opacity=1},800)},7000)}
 
+if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();
 renderRank();load();
 if("serviceWorker" in navigator&&location.protocol==="https:"){/* optional: add a sw.js later for offline use */}
 </script>
