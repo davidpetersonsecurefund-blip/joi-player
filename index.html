@@ -327,6 +327,20 @@ header#top,main,.ticker{position:relative;z-index:1}
       <label>Custom accent color <input type="color" id="o-accent" style="width:100%;height:46px;margin-top:4px;background:none;border:1px solid var(--line);border-radius:10px"></label>
       <button class="btn alt" id="o-accent-clear" style="min-height:40px;margin-top:8px">Use theme color</button>
     </div>
+    <div class="box">
+      <b>Voice</b>
+      <p class="mut" style="margin:6px 0">A free AI voice that runs on your own device: no credits, no account, no limits. The first download is about 90 MB, then it works offline. Turn on "Read instructions aloud" above to use it in sessions.</p>
+      <label>Voice engine<select id="v-eng"><option value="browser">Basic browser voice</option><option value="kokoro">Local AI voice</option></select></label>
+      <label>Voice<select id="v-voice">
+        <option value="af_nicole">Nicole (soft, intimate)</option><option value="af_heart">Heart (warm)</option><option value="af_bella">Bella (smooth)</option>
+        <option value="af_sarah">Sarah</option><option value="af_sky">Sky</option><option value="af_jessica">Jessica</option>
+        <option value="bf_isabella">Isabella (British)</option><option value="bf_emma">Emma (British)</option></select></label>
+      <label>Pace<select id="v-speed"><option value="0.7">Very slow</option><option value="0.8">Slow</option><option value="0.85">Relaxed</option><option value="0.95">Natural</option><option value="1.05">Brisk</option></select></label>
+      <label>Deepen the voice<select id="v-deep"><option value="0">None</option><option value="1">A little</option><option value="2">More</option><option value="3">A lot</option></select></label>
+      <div class="row"><button class="btn alt" id="v-dl" style="min-height:46px;font-size:1rem">Download voice</button><button class="btn alt" id="v-test" style="min-height:46px;font-size:1rem">Test voice</button></div>
+      <button class="btn alt" id="v-pre" style="min-height:46px;font-size:1rem">Pre-generate my script lines</button>
+      <div class="bar"><i id="v-bar"></i></div><div class="mut" id="v-stat" style="margin-top:8px">Not downloaded yet.</div>
+    </div>
     <div class="box" id="gbox">
       <b>Google Drive sync</b>
       <p class="mut" style="margin:6px 0">Keep your library on Google Drive and open it on any device. Files go to a private "JOI Hub" folder that only this site can access. Nothing contacts Google until you sign in.</p>
@@ -404,7 +418,7 @@ const DEFAULT_SCRIPT={
   forfeits:[{title:"Forfeit",desc:"Session over. Take a cold shower."},{title:"Forfeit",desc:"Session over. Walk away for ten minutes."}]
 };
 let script=LS.get("script",null)||DEFAULT_SCRIPT;
-const opt=Object.assign({metro:true,voice:false,wake:true,glow:true,amb:true,beat:true,haptic:false,vol:.6,ui:true,reel:!matchMedia("(pointer:coarse)").matches,msound:"beat",mvol:.5,rounds:1,len:1,theme:"neon",accent:""},LS.get("opt",{}));
+const opt=Object.assign({metro:true,voice:false,wake:true,glow:true,amb:true,beat:true,haptic:false,vol:.6,ui:true,reel:!matchMedia("(pointer:coarse)").matches,msound:"beat",mvol:.5,engine:"browser",kvoice:"af_nicole",kspeed:.85,kdeep:1,rounds:1,len:1,theme:"neon",accent:""},LS.get("opt",{}));
 
 /* ---------- storage (IndexedDB) ---------- */
 const dbp=new Promise((res,rej)=>{const r=indexedDB.open("joi",2);r.onupgradeneeded=()=>{const d=r.result;for(const n of ["m","t"])if(!d.objectStoreNames.contains(n))d.createObjectStore(n,{keyPath:"id"})};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});
@@ -712,7 +726,11 @@ function beatTick(){
   if(opt.haptic&&navigator.vibrate)navigator.vibrate(22);
 }
 function setBpm(n){clearInterval(metro);metro=null;bpmNow=n;if(n>0&&(opt.metro||opt.haptic))metro=setInterval(beatTick,60000/n)}
-function speak(t){if(!opt.voice||!("speechSynthesis" in window))return;speechSynthesis.cancel();speechSynthesis.speak(new SpeechSynthesisUtterance(t))}
+function speak(t){
+  if(!opt.voice)return;
+  if(opt.engine==="kokoro"&&LS.get("kok",0)){kSay(t);return}
+  if(!("speechSynthesis" in window))return;speechSynthesis.cancel();speechSynthesis.speak(new SpeechSynthesisUtterance(t));
+}
 
 /* ---------- fair random: every clip plays once before any repeats ---------- */
 function mkBag(arr){
@@ -772,10 +790,10 @@ function next(){
   if(S.mode==="escalation"&&st!=="yellow"){S.bpm=Math.min(240,S.bpm+15);bpm=S.bpm}
   else if(S.mode==="slowburn"&&st!=="yellow")bpm=Math.max(40,170-S.n*10);
   else if(cmd.bpm&&cmd.bpm[1]>0)bpm=rnd(cmd.bpm[0],cmd.bpm[1]);
-  let main=cmd.main,sub=cmd.sub;
-  if(nnn){const c=script.nnn[(S.n-1)%script.nnn.length];main=`Stage ${S.n}: ${c.main}`;sub=c.sub;bpm=0}
+  let main=cmd.main,sub=cmd.sub,say=null;
+  if(nnn){const c=script.nnn[(S.n-1)%script.nnn.length];main=`Stage ${S.n}: ${c.main}`;sub=c.sub;say=c.main+(c.sub?". "+c.sub:"");bpm=0}
   render(st,main,sub,st.toUpperCase()+(bpm?` · ${bpm} BPM`:""));
-  setBpm(bpm);showClip();speak(main);
+  setBpm(bpm);showClip();speak(say||main+(sub?". "+sub:""));
   $("#acts").style.display=nnn?"flex":"none";
   if(nnn){$("#tm").textContent="";return}
   S.sec=Math.round((st==="red"?rnd(8,12):rnd(15,25))*opt.len);tick();
@@ -791,7 +809,7 @@ function render(st,main,sub,badge){
 function finish(){
   clearInterval(S.t);setBpm(0);S.over=true;S.done=true;
   const f=script.finish;render("done",f.main,f.sub,"DONE");
-  $("#tm").textContent="";$("#acts").style.display="none";speak(f.main);
+  $("#tm").textContent="";$("#acts").style.display="none";speak(f.main+(f.sub?". "+f.sub:""));
   sheet("Session complete","Tap to see your results.",()=>end());
 }
 function fail(){
@@ -802,7 +820,7 @@ function fail(){
 function sheet(t,d,cb){$("#sh-t").textContent=t;$("#sh-d").textContent=d;$("#sh-b").onclick=cb;$("#sheet").classList.add("on")}
 function end(){
   if(!S)return;
-  clearInterval(S.t);setBpm(0);speechSynthesis&&speechSynthesis.cancel&&speechSynthesis.cancel();musicStop();
+  clearInterval(S.t);setBpm(0);speechSynthesis&&speechSynthesis.cancel&&speechSynthesis.cancel();stopTts();musicStop();
   const secs=Math.floor((Date.now()-S.start)/1000);
   const day=new Date().toLocaleDateString("en-CA"),yday=new Date(Date.now()-864e5).toLocaleDateString("en-CA"),sk=LS.get("streak",{n:0,last:""});
   let bonus=0;
@@ -1087,6 +1105,72 @@ document.addEventListener("visibilitychange",()=>{if(!document.hidden&&$("#intro
  let k=0;el.textContent=L[0];el.style.transition="opacity .8s";
  setInterval(()=>{el.style.opacity=0;setTimeout(()=>{k=(k+1)%L.length;el.textContent=L[k];el.style.opacity=1},800)},7000)}
 
+/* ---------- local AI voice (Kokoro, runs in your browser) ---------- */
+const kcache=new Map();let kP=null,ttsSrc=null,sayId=0;
+function kstat(t,pct){$("#v-stat").textContent=t;if(pct!=null)$("#v-bar").style.width=pct+"%"}
+function kLoad(){
+  return kP||(kP=(async()=>{
+    kstat("Downloading the voice (about 90 MB, one time)...",5);
+    let mod;
+    for(const u of ["https://cdn.jsdelivr.net/npm/kokoro-js@1/+esm","https://esm.sh/kokoro-js@1"]){try{mod=await import(u);break}catch(e){}}
+    if(!mod)throw new Error("could not load the voice engine (offline or blocked)");
+    const t=await mod.KokoroTTS.from_pretrained("onnx-community/Kokoro-82M-v1.0-ONNX",{dtype:"q8",device:"wasm"});
+    LS.set("kok",1);kstat("Voice ready.",100);return t;
+  })().catch(e=>{kP=null;throw e}));
+}
+async function kGen(text){
+  const key=`${opt.kvoice}|${opt.kspeed}|${text}`;
+  if(kcache.has(key))return kcache.get(key);
+  try{const r=await db("readonly",st=>st.get("tts:"+key),"t");if(r&&r.pcm){const b={pcm:r.pcm,sr:r.sr};kcache.set(key,b);return b}}catch(e){}
+  const tts=await kLoad(),a=await tts.generate(text,{voice:opt.kvoice,speed:+opt.kspeed}),b={pcm:a.audio,sr:a.sampling_rate};
+  kcache.set(key,b);
+  try{await db("readwrite",st=>st.put({id:"tts:"+key,pcm:b.pcm,sr:b.sr}),"t")}catch(e){}
+  return b;
+}
+function stopTts(){
+  sayId++;if(ttsSrc){try{ttsSrc.stop()}catch(e){}ttsSrc=null}
+  if(musEl)musEl.volume=opt.mvol;
+}
+function kPlay(b){
+  ac=ac||new (window.AudioContext||window.webkitAudioContext)();if(ac.state==="suspended")ac.resume();
+  if(ttsSrc){try{ttsSrc.stop()}catch(e){}}
+  const ab=ac.createBuffer(1,b.pcm.length,b.sr);ab.copyToChannel(b.pcm,0);
+  const s=ac.createBufferSource(),sh=ac.createBiquadFilter(),lp=ac.createBiquadFilter(),g=ac.createGain();
+  s.buffer=ab;s.detune.value=-(+opt.kdeep)*100;sh.type="lowshelf";sh.frequency.value=220;sh.gain.value=4;
+  lp.type="lowpass";lp.frequency.value=7500;g.gain.value=1;
+  s.connect(sh);sh.connect(lp);lp.connect(g);g.connect(ac.destination);
+  if(musEl)musEl.volume=opt.mvol*.35;
+  s.onended=()=>{if(ttsSrc===s){ttsSrc=null;if(musEl)musEl.volume=opt.mvol}};
+  ttsSrc=s;s.start();
+}
+async function kSay(t){
+  stopTts();const my=sayId;
+  try{const b=await kGen(t);if(my!==sayId)return;kPlay(b)}catch(e){kstat("Voice error: "+e.message)}
+}
+async function kPre(){
+  const L=new Set(),add=(m,x)=>L.add(m+(x?". "+x:""));
+  for(const k of ["warmup","green","yellow","red","nnn"])script[k].forEach(c=>add(c.main,c.sub));
+  add(script.finish.main,script.finish.sub);script.forfeits.forEach(f=>L.add(f.title+". "+f.desc));
+  const a=[...L];let n=0;
+  try{for(const t of a){kstat(`Generating voice lines ${++n}/${a.length}...`,Math.round(n/a.length*100));await kGen(t)}
+    kstat(`Done. ${a.length} lines are ready and play instantly, even offline.`,100)}
+  catch(e){kstat("Stopped: "+e.message)}
+}
+$("#v-eng").value=opt.engine;$("#v-voice").value=opt.kvoice;$("#v-speed").value=String(opt.kspeed);$("#v-deep").value=String(opt.kdeep);
+for(const [id,k] of [["#v-eng","engine"],["#v-voice","kvoice"],["#v-speed","kspeed"],["#v-deep","kdeep"]])$(id).onchange=e=>{opt[k]=e.target.value;LS.set("opt",opt)};
+if(LS.get("kok",0))kstat("Voice downloaded.");
+$("#v-dl").onclick=async()=>{
+  try{await kLoad();opt.engine="kokoro";opt.voice=true;LS.set("opt",opt);$("#v-eng").value="kokoro";$("#o-voice").checked=true}
+  catch(e){kstat("Download failed: "+e.message)}
+};
+$("#v-test").onclick=async()=>{
+  if(!LS.get("kok",0)){kstat("Download the voice first.");return}
+  ac=ac||new (window.AudioContext||window.webkitAudioContext)();if(ac.state==="suspended")ac.resume();
+  kstat("Generating...");stopTts();const my=sayId;
+  try{const b=await kGen("Hey there. Take your time. I've got all night.");if(my!==sayId)return;kstat("Playing.");kPlay(b)}catch(e){kstat("Voice error: "+e.message)}
+};
+$("#v-pre").onclick=async()=>{if(!LS.get("kok",0)){kstat("Download the voice first.");return}await kPre()};
+
 /* ---------- Google Drive sync (runs only after you sign in) ---------- */
 const G={cid:LS.get("gcid",""),tok:null,exp:0,folder:null,busy:false};
 const API="https://www.googleapis.com/drive/v3/files",JSONH={"Content-Type":"application/json"};
@@ -1116,7 +1200,14 @@ async function gf(url,o,retry){
   const t=await gToken();o.headers=Object.assign({Authorization:"Bearer "+t},o.headers||{});
   const r=await fetch(url,o);
   if(r.status===401&&retry){G.tok=null;return gf(url,o,0)}
-  if(!r.ok&&r.status!==308)throw new Error("Drive error "+r.status);
+  if(!r.ok&&r.status!==308){
+    let m="";try{const j=await r.clone().json();m=(j.error&&(j.error.message||(j.error.errors&&j.error.errors[0]&&j.error.errors[0].reason)))||""}catch(e){}
+    const l=m.toLowerCase();
+    let hint="";
+    if(r.status===403&&(l.includes("not been used")||l.includes("disabled")||l.includes("accessnotconfigured")))hint=" FIX: enable the Google Drive API in the SAME project as your Client ID, wait a few minutes, then sync again.";
+    else if(r.status===403&&(l.includes("scope")||l.includes("insufficient")||l.includes("permission")))hint=" FIX: tap Sign out, sign in again, and tick the Google Drive permission box on the consent screen.";
+    throw new Error("Drive error "+r.status+(m?": "+m.slice(0,200):"")+hint);
+  }
   return r;
 }
 async function gFolder(){
