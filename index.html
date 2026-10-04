@@ -330,14 +330,25 @@ header#top,main,.ticker{position:relative;z-index:1}
     <div class="box">
       <b>Voice</b>
       <p class="mut" style="margin:6px 0">A free AI voice that runs on your own device: no credits, no account, no limits. The first download is about 90 MB, then it works offline. Turn on "Read instructions aloud" above to use it in sessions.</p>
-      <label>Voice engine<select id="v-eng"><option value="browser">Basic browser voice</option><option value="kokoro">Local AI voice</option></select></label>
+      <label>Voice engine<select id="v-eng"><option value="browser">Basic browser voice</option><option value="kokoro">Local AI voice</option><option value="elevenlabs">ElevenLabs (saved lines)</option></select></label>
       <label>Voice<select id="v-voice">
         <option value="af_nicole">Nicole (soft, intimate)</option><option value="af_heart">Heart (warm)</option><option value="af_bella">Bella (smooth)</option>
         <option value="af_sarah">Sarah</option><option value="af_sky">Sky</option><option value="af_jessica">Jessica</option>
         <option value="bf_isabella">Isabella (British)</option><option value="bf_emma">Emma (British)</option></select></label>
       <label>Pace<select id="v-speed"><option value="0.7">Very slow</option><option value="0.8">Slow</option><option value="0.85">Relaxed</option><option value="0.95">Natural</option><option value="1.05">Brisk</option></select></label>
       <label>Deepen the voice<select id="v-deep"><option value="0">None</option><option value="1">A little</option><option value="2">More</option><option value="3">A lot</option></select></label>
-      <div class="row"><button class="btn alt" id="v-dl" style="min-height:46px;font-size:1rem">Download voice</button><button class="btn alt" id="v-test" style="min-height:46px;font-size:1rem">Test voice</button></div>
+      <div style="margin-top:14px;border-top:1px solid var(--line);padding-top:10px">
+        <b>ElevenLabs</b>
+        <p class="mut" style="margin:6px 0">Every line is generated once and saved on this device, so replaying it costs nothing. Pick your voice and settings BEFORE generating, because changing them makes new lines.</p>
+        <label>API key (stays on this device)<input type="password" id="e-key" autocomplete="off" placeholder="paste your key"></label>
+        <div class="row"><button class="btn alt" id="e-load" style="min-height:44px;font-size:1rem">Load my voices</button><button class="btn alt" id="e-cred" style="min-height:44px;font-size:1rem">Check credits</button></div>
+        <label>Voice<select id="e-voice"><option value="">(load voices first)</option></select></label>
+        <label>Or paste a Voice ID<input type="text" id="e-vid" placeholder="optional" autocomplete="off" spellcheck="false"></label>
+        <label>Model<select id="e-model"><option value="eleven_flash_v2_5">Flash v2.5 (half the credits)</option><option value="eleven_multilingual_v2">Multilingual v2 (best quality, full price)</option></select></label>
+        <label>Expressiveness<select id="e-stab"><option value="0.7">Calm</option><option value="0.5">Balanced</option><option value="0.3">Expressive</option></select></label>
+        <label class="chk"><input type="checkbox" id="e-live"> Generate missing lines during sessions (uses credits)</label>
+      </div>
+      <div class="row" style="margin-top:12px"><button class="btn alt" id="v-dl" style="min-height:46px;font-size:1rem">Download voice</button><button class="btn alt" id="v-test" style="min-height:46px;font-size:1rem">Test voice</button></div>
       <button class="btn alt" id="v-pre" style="min-height:46px;font-size:1rem">Pre-generate my script lines</button>
       <div class="bar"><i id="v-bar"></i></div><div class="mut" id="v-stat" style="margin-top:8px">Not downloaded yet.</div>
     </div>
@@ -419,7 +430,7 @@ const DEFAULT_SCRIPT={
   forfeits:[{title:"Forfeit",desc:"Session over. Take a cold shower."},{title:"Forfeit",desc:"Session over. Walk away for ten minutes."}]
 };
 let script=LS.get("script",null)||DEFAULT_SCRIPT;
-const opt=Object.assign({metro:true,voice:false,wake:true,glow:true,amb:true,beat:true,haptic:false,vol:.6,ui:true,reel:!matchMedia("(pointer:coarse)").matches,msound:"beat",mvol:.5,engine:"browser",kvoice:"af_nicole",kspeed:.85,kdeep:1,rounds:1,len:1,theme:"neon",accent:""},LS.get("opt",{}));
+const opt=Object.assign({metro:true,voice:false,wake:true,glow:true,amb:true,beat:true,haptic:false,vol:.6,ui:true,reel:!matchMedia("(pointer:coarse)").matches,msound:"beat",mvol:.5,engine:"browser",kvoice:"af_nicole",kspeed:.85,kdeep:1,ekey:"",evoice:"",evid:"",emodel:"eleven_flash_v2_5",estab:.5,elive:false,rounds:1,len:1,theme:"neon",accent:""},LS.get("opt",{}));
 
 /* ---------- storage (IndexedDB) ---------- */
 const dbp=new Promise((res,rej)=>{const r=indexedDB.open("joi",2);r.onupgradeneeded=()=>{const d=r.result;for(const n of ["m","t"])if(!d.objectStoreNames.contains(n))d.createObjectStore(n,{keyPath:"id"})};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});
@@ -729,6 +740,7 @@ function beatTick(){
 function setBpm(n){clearInterval(metro);metro=null;bpmNow=n;if(n>0&&(opt.metro||opt.haptic))metro=setInterval(beatTick,60000/n)}
 function speak(t){
   if(!opt.voice)return;
+  if(opt.engine==="elevenlabs"&&opt.ekey){eSay(t);return}
   if(opt.engine==="kokoro"&&LS.get("kok",0)){kSay(t);return}
   if(!("speechSynthesis" in window))return;speechSynthesis.cancel();speechSynthesis.speak(new SpeechSynthesisUtterance(t));
 }
@@ -1171,6 +1183,99 @@ $("#v-test").onclick=async()=>{
   try{const b=await kGen("Hey there. Take your time. I've got all night.");if(my!==sayId)return;kstat("Playing.");kPlay(b)}catch(e){kstat("Voice error: "+e.message)}
 };
 $("#v-pre").onclick=async()=>{if(!LS.get("kok",0)){kstat("Download the voice first.");return}await kPre()};
+
+/* ---------- ElevenLabs with saved lines ---------- */
+const ecache=new Map();
+const hash=s=>{let h=5381;for(let i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))|0;return (h>>>0).toString(36)};
+const evid=()=>(opt.evid||opt.evoice||"").trim();
+const ekeyOf=t=>`${evid()}|${opt.emodel}|${opt.estab}|${opt.kspeed}|${t}`;
+async function decodeBlob(b){ac=ac||new (window.AudioContext||window.webkitAudioContext)();return await ac.decodeAudioData(await b.arrayBuffer())}
+async function eGet(t){
+  const k=ekeyOf(t);if(ecache.has(k))return ecache.get(k);
+  try{const r=await db("readonly",st=>st.get("el:"+hash(k)),"t");if(r&&r.k===k&&r.blob){const ab=await decodeBlob(r.blob);ecache.set(k,ab);return ab}}catch(e){}
+  return null;
+}
+async function eGen(text){
+  const r=await fetch("https://api.elevenlabs.io/v1/text-to-speech/"+encodeURIComponent(evid())+"?output_format=mp3_44100_128",{
+    method:"POST",headers:{"xi-api-key":opt.ekey,"Content-Type":"application/json",Accept:"audio/mpeg"},
+    body:JSON.stringify({text,model_id:opt.emodel,voice_settings:{stability:+opt.estab,similarity_boost:.75,speed:+opt.kspeed}})});
+  if(!r.ok){
+    let m="";try{const j=await r.json();m=j.detail&&(j.detail.message||j.detail)||""}catch(e){}
+    throw new Error("ElevenLabs "+r.status+(m?": "+(typeof m==="string"?m:JSON.stringify(m)).slice(0,180):""));
+  }
+  return await r.blob();
+}
+async function eMake(t){
+  if(!opt.ekey)throw new Error("add your API key first");if(!evid())throw new Error("pick a voice first");
+  const blob=await eGen(t),k=ekeyOf(t);
+  try{await db("readwrite",st=>st.put({id:"el:"+hash(k),k,blob}),"t")}catch(e){}
+  const ab=await decodeBlob(blob);ecache.set(k,ab);return ab;
+}
+function ePlay(ab){
+  ac=ac||new (window.AudioContext||window.webkitAudioContext)();if(ac.state==="suspended")ac.resume();
+  if(ttsSrc){try{ttsSrc.stop()}catch(e){}}
+  const s=ac.createBufferSource();s.buffer=ab;s.connect(ac.destination);
+  if(musEl)musEl.volume=opt.mvol*.35;
+  s.onended=()=>{if(ttsSrc===s){ttsSrc=null;if(musEl)musEl.volume=opt.mvol}};
+  ttsSrc=s;s.start();
+}
+async function eSay(t){
+  stopTts();const my=sayId;
+  try{
+    let ab=await eGet(t);if(!ab&&opt.elive)ab=await eMake(t);
+    if(my!==sayId)return;
+    if(ab)ePlay(ab);else if("speechSynthesis" in window){speechSynthesis.cancel();speechSynthesis.speak(new SpeechSynthesisUtterance(t))}
+  }catch(e){kstat(e.message)}
+}
+function scriptLines(){
+  const L=new Set(),add=(m,x)=>L.add(m+(x?". "+x:""));
+  for(const k of ["warmup","green","yellow","red","nnn"])script[k].forEach(c=>add(c.main,c.sub));
+  add(script.finish.main,script.finish.sub);script.forfeits.forEach(f=>L.add(f.title+". "+f.desc));
+  return [...L];
+}
+async function ePre(){
+  if(!opt.ekey||!evid()){kstat("Add your key and pick a voice first.");return}
+  const L=scriptLines(),need=[];
+  for(const t of L){if(!(await eGet(t)))need.push(t)}
+  if(!need.length){kstat(`All ${L.length} lines are already saved.`,100);return}
+  const chars=need.reduce((a,t)=>a+t.length,0),per=opt.emodel==="eleven_multilingual_v2"?1:.5;
+  if(!confirm(`${need.length} new lines to generate: ${chars} characters, about ${Math.round(chars*per)} credits. Continue?`))return;
+  let n=0;
+  try{for(const t of need){kstat(`Generating ${++n}/${need.length}...`,Math.round(n/need.length*100));await eMake(t)}
+    kstat(`Done. ${need.length} lines saved. They replay free, even offline.`,100)}
+  catch(e){kstat("Stopped: "+e.message)}
+}
+async function eTest(){
+  if(!opt.ekey||!evid()){kstat("Add your key and pick a voice first.");return}
+  stopTts();const my=sayId,t="Hey there. Take your time. I've got all night.";kstat("Generating (saved after the first time)...");
+  try{let ab=await eGet(t);if(!ab)ab=await eMake(t);if(my!==sayId)return;kstat("Playing.");ePlay(ab)}catch(e){kstat(e.message)}
+}
+$("#e-key").value=opt.ekey;$("#e-vid").value=opt.evid;$("#e-model").value=opt.emodel;$("#e-stab").value=String(opt.estab);$("#e-live").checked=opt.elive;
+if(opt.evoice){const o=new Option("Saved voice ("+opt.evoice.slice(0,6)+"...)",opt.evoice);$("#e-voice").add(o);$("#e-voice").value=opt.evoice}
+for(const [id,k] of [["#e-key","ekey"],["#e-voice","evoice"],["#e-vid","evid"],["#e-model","emodel"],["#e-stab","estab"]])$(id).onchange=e=>{opt[k]=e.target.value.trim();LS.set("opt",opt)};
+$("#e-live").onchange=e=>{opt.elive=e.target.checked;LS.set("opt",opt)};
+$("#e-load").onclick=async()=>{
+  if(!opt.ekey){kstat("Paste your API key first.");return}
+  try{
+    const r=await fetch("https://api.elevenlabs.io/v1/voices",{headers:{"xi-api-key":opt.ekey}});
+    if(!r.ok)throw new Error("status "+r.status+" (the key may need permission to read voices)");
+    const j=await r.json(),sel=$("#e-voice");sel.innerHTML="";
+    j.voices.forEach(v=>sel.add(new Option(v.name+(v.category?" ("+v.category+")":""),v.voice_id)));
+    if(opt.evoice&&[...sel.options].some(o=>o.value===opt.evoice))sel.value=opt.evoice;else{opt.evoice=sel.value;LS.set("opt",opt)}
+    kstat(j.voices.length+" voices loaded. Pick one.");
+  }catch(e){kstat("Could not load voices: "+e.message+". You can paste a Voice ID instead.")}
+};
+$("#e-cred").onclick=async()=>{
+  if(!opt.ekey){kstat("Paste your API key first.");return}
+  try{
+    const r=await fetch("https://api.elevenlabs.io/v1/user/subscription",{headers:{"xi-api-key":opt.ekey}});
+    if(!r.ok)throw new Error("status "+r.status+" (the key may need permission to read your user info)");
+    const j=await r.json();kstat(`Credits left this period: ${(j.character_limit-j.character_count).toLocaleString()} of ${j.character_limit.toLocaleString()}.`);
+  }catch(e){kstat("Could not check credits: "+e.message)}
+};
+{const kT=$("#v-test").onclick,kP2=$("#v-pre").onclick;
+ $("#v-test").onclick=()=>opt.engine==="elevenlabs"?eTest():kT();
+ $("#v-pre").onclick=()=>opt.engine==="elevenlabs"?ePre():kP2()}
 
 /* ---------- Google Drive sync (runs only after you sign in) ---------- */
 const G={cid:LS.get("gcid",""),tok:null,exp:0,folder:null,busy:false};
