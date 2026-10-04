@@ -327,6 +327,26 @@ header#top,main,.ticker{position:relative;z-index:1}
       <label>Custom accent color <input type="color" id="o-accent" style="width:100%;height:46px;margin-top:4px;background:none;border:1px solid var(--line);border-radius:10px"></label>
       <button class="btn alt" id="o-accent-clear" style="min-height:40px;margin-top:8px">Use theme color</button>
     </div>
+    <div class="box" id="gbox">
+      <b>Google Drive sync</b>
+      <p class="mut" style="margin:6px 0">Keep your library on Google Drive and open it on any device. Files go to a private "JOI Hub" folder that only this site can access. Nothing contacts Google until you sign in.</p>
+      <label>Google OAuth Client ID<input type="text" id="g-cid" placeholder="123456-abc.apps.googleusercontent.com" autocomplete="off" spellcheck="false"></label>
+      <label>Sync direction<select id="g-dir"><option value="both">Upload and download</option><option value="up">Upload only</option><option value="down">Download only</option></select></label>
+      <label class="chk"><input type="checkbox" id="g-auto"> Sync when I open the site (after first sign-in)</label>
+      <div class="row"><button class="btn" id="g-in" style="margin-top:12px;min-height:48px;font-size:1.05rem">Sign in with Google</button><button class="btn alt" id="g-sync" style="margin-top:12px;min-height:48px;font-size:1.05rem">Sync now</button></div>
+      <div class="bar"><i id="g-bar"></i></div>
+      <div class="mut" id="g-stat" style="margin-top:8px">Not signed in.</div>
+      <details style="margin-top:10px"><summary class="mut" style="min-height:36px">Setup guide (about 10 minutes)</summary>
+        <ol class="mut" style="padding-left:18px;line-height:1.6;margin-top:6px">
+          <li>Go to console.cloud.google.com and create a new project.</li>
+          <li>APIs &amp; Services, Library: enable the Google Drive API.</li>
+          <li>OAuth consent screen: choose External, fill the basics, add the scope .../auth/drive.file, and add your own Google address as a test user.</li>
+          <li>Credentials, Create credentials, OAuth client ID, type Web application.</li>
+          <li>Under Authorized JavaScript origins add your site address with no path (like https://yourname.github.io).</li>
+          <li>Copy the Client ID into the box above and tap Sign in. If sign-in stops working after about a week, switch the consent screen from Testing to In production.</li>
+        </ol></details>
+      <p class="mut" style="margin-top:8px;color:#ffcc00">Heads-up: Google can scan files in Drive, and its rules cover explicit content. Use a separate Google account made just for this.</p>
+    </div>
     <div class="box">
       <b>Script (your own text)</b>
       <p class="mut" style="margin:6px 0">Edit any wording below. <code>bpm</code> is [min,max]; [0,0] means no clicks.</p>
@@ -579,10 +599,14 @@ async function fillThumbs(){
   }
   fillRun=false;
 }
-async function delItem(id){
+async function delItemLocal(id){
   await db("readwrite",st=>st.delete(id));await db("readwrite",st=>st.delete(id),"t");
   const t=thumbs.get(id);if(t){URL.revokeObjectURL(t.url);thumbs.delete(id)}
   delete meta[id];msave();
+}
+async function delItem(id){
+  await delItemLocal(id);
+  if(LS.get("gmap",{})[id]){const g=LS.get("gdel",[]);g.push(id);LS.set("gdel",g)}
 }
 /* preview */
 let pvUrl=null,pvItem=null;
@@ -1062,6 +1086,149 @@ document.addEventListener("visibilitychange",()=>{if(!document.hidden&&$("#intro
 {const L=["You've been thinking about this all day.","Nobody's watching. Take your time.","Slow down. The wait is part of it.","Tonight you follow the rules.","Good things come to those who wait.","Don't rush. Don't stop. Don't finish."],el=document.querySelector(".hero-s");
  let k=0;el.textContent=L[0];el.style.transition="opacity .8s";
  setInterval(()=>{el.style.opacity=0;setTimeout(()=>{k=(k+1)%L.length;el.textContent=L[k];el.style.opacity=1},800)},7000)}
+
+/* ---------- Google Drive sync (runs only after you sign in) ---------- */
+const G={cid:LS.get("gcid",""),tok:null,exp:0,folder:null,busy:false};
+const API="https://www.googleapis.com/drive/v3/files",JSONH={"Content-Type":"application/json"};
+function gs(t,pct){$("#g-stat").textContent=t;if(pct!=null)$("#g-bar").style.width=pct+"%"}
+let gisP=null;
+function loadGis(){
+  return gisP||(gisP=new Promise((res,rej)=>{
+    const sc=document.createElement("script");sc.src="https://accounts.google.com/gsi/client";sc.onload=res;
+    sc.onerror=()=>{gisP=null;rej(new Error("Could not load Google sign-in (offline or blocked)"))};document.head.appendChild(sc);
+  }));
+}
+function gToken(){
+  return new Promise((res,rej)=>{
+    if(G.tok&&Date.now()<G.exp-60000)return res(G.tok);
+    if(!G.cid)return rej(new Error("Paste your Client ID first"));
+    if(!window.google||!google.accounts)return rej(new Error("Google sign-in not loaded"));
+    const c=google.accounts.oauth2.initTokenClient({
+      client_id:G.cid,scope:"https://www.googleapis.com/auth/drive.file",
+      callback:r=>{if(r.error)return rej(new Error(r.error));G.tok=r.access_token;G.exp=Date.now()+(r.expires_in||3600)*1000;LS.set("gok",1);$("#g-in").textContent="Sign out";res(G.tok)},
+      error_callback:e=>rej(new Error(e.type||"sign-in popup was blocked"))
+    });
+    c.requestAccessToken({prompt:LS.get("gok",0)?"":"consent"});
+  });
+}
+async function gf(url,o,retry){
+  o=o||{};if(retry===undefined)retry=1;
+  const t=await gToken();o.headers=Object.assign({Authorization:"Bearer "+t},o.headers||{});
+  const r=await fetch(url,o);
+  if(r.status===401&&retry){G.tok=null;return gf(url,o,0)}
+  if(!r.ok&&r.status!==308)throw new Error("Drive error "+r.status);
+  return r;
+}
+async function gFolder(){
+  if(G.folder)return G.folder;
+  const q=encodeURIComponent("name='JOI Hub' and mimeType='application/vnd.google-apps.folder' and trashed=false");
+  let j=await (await gf(`${API}?q=${q}&fields=files(id)`)).json();
+  if(j.files.length)return G.folder=j.files[0].id;
+  j=await (await gf(API,{method:"POST",headers:JSONH,body:JSON.stringify({name:"JOI Hub",mimeType:"application/vnd.google-apps.folder"})})).json();
+  return G.folder=j.id;
+}
+async function gList(fid){
+  let out=[],pt="";
+  do{
+    const q=encodeURIComponent(`'${fid}' in parents and trashed=false`);
+    const j=await (await gf(`${API}?q=${q}&fields=nextPageToken,files(id,name,size,mimeType,appProperties)&pageSize=200${pt?"&pageToken="+pt:""}`)).json();
+    out=out.concat(j.files);pt=j.nextPageToken||"";
+  }while(pt);
+  return out;
+}
+async function gUpload(fid,it,prog){
+  const size=it.blob.size,CH=8*1024*1024;
+  const init=await gf("https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable",{method:"POST",
+    headers:{"Content-Type":"application/json; charset=UTF-8","X-Upload-Content-Type":it.type||"application/octet-stream","X-Upload-Content-Length":String(size)},
+    body:JSON.stringify({name:it.name,parents:[fid],appProperties:{lid:it.id,folder:it.folder,type:it.type}})});
+  const url=init.headers.get("Location");if(!url)throw new Error("Upload session failed");
+  let off=0;
+  while(off<size){
+    const end=Math.min(off+CH,size);let r,tries=0;
+    for(;;){
+      try{r=await fetch(url,{method:"PUT",headers:{"Content-Range":`bytes ${off}-${end-1}/${size}`},body:it.blob.slice(off,end)});if(r.status===308||r.ok)break;throw new Error("status "+r.status)}
+      catch(e){if(++tries>3)throw e;await new Promise(z=>setTimeout(z,1500*tries))}
+    }
+    off=end;prog(Math.round(off/size*100));
+    if(r.ok)return (await r.json()).id;
+  }
+  throw new Error("Upload ended early");
+}
+async function gMeta(fid,mf){
+  let remote={};
+  if(mf){try{remote=await (await gf(`${API}/${mf.id}?alt=media`)).json()}catch(e){}}
+  const rm=remote.meta||{};
+  for(const id in rm){
+    const a=meta[id],b=rm[id];
+    if(!a)meta[id]=b;else{a.fav=a.fav||b.fav;a.tags=[...new Set([...a.tags,...b.tags])];a.plays=Math.max(a.plays,b.plays);a.last=Math.max(a.last,b.last)}
+  }
+  if(remote.prof&&remote.prof.xp>prof.xp)prof=Object.assign(prof,remote.prof);
+  const ls=LS.get("streak",{n:0,last:""});if(remote.streak&&remote.streak.last>ls.last)LS.set("streak",remote.streak);
+  if(remote.daily&&remote.daily.done&&remote.daily.d===new Date().toLocaleDateString("en-CA"))LS.set("daily",remote.daily);
+  LS.set("meta",meta);LS.set("prof",prof);
+  const body=JSON.stringify({meta,prof,streak:LS.get("streak",{n:0,last:""}),daily:LS.get("daily",{}),ts:Date.now()});
+  let id=mf&&mf.id;
+  if(!id)id=(await (await gf(API,{method:"POST",headers:JSONH,body:JSON.stringify({name:"joi-meta.json",parents:[fid],mimeType:"application/json"})})).json()).id;
+  await gf(`https://www.googleapis.com/upload/drive/v3/files/${id}?uploadType=media`,{method:"PATCH",headers:JSONH,body});
+}
+async function gSync(){
+  if(G.busy)return;G.busy=true;
+  try{
+    gs("Connecting to Drive...",3);
+    const fid=await gFolder(),remote=await gList(fid),dir=$("#g-dir").value;
+    const mf=remote.find(f=>f.name==="joi-meta.json");
+    const byLid=new Map(remote.filter(f=>f.name!=="joi-meta.json"&&f.appProperties&&f.appProperties.lid).map(f=>[f.appProperties.lid,f]));
+    const gmap=LS.get("gmap",{}),gdel=LS.get("gdel",[]);
+    for(const lid of [...gdel]){
+      const f=byLid.get(lid);
+      if(f){try{await gf(`${API}/${f.id}`,{method:"DELETE"});byLid.delete(lid)}catch(e){continue}}
+      gdel.splice(gdel.indexOf(lid),1);delete gmap[lid];
+    }
+    LS.set("gdel",gdel);
+    let warn="";
+    const gone=items.filter(i=>gmap[i.id]&&!byLid.has(i.id));
+    if(gone.length){
+      if(dir!=="up"&&gone.length<=Math.max(2,items.length/2)){for(const i of gone){await delItemLocal(i.id);delete gmap[i.id]}}
+      else{gone.forEach(i=>delete gmap[i.id]);if(dir!=="up")warn=" Many clips were missing from Drive, so I kept them here and will re-upload."}
+    }
+    const local=new Set(items.map(i=>i.id)),gset=new Set(gdel);
+    const ups=dir==="down"?[]:items.filter(i=>local.has(i.id)&&!byLid.has(i.id)&&!(gone.includes(i)&&dir!=="up"&&!warn));
+    const downs=dir==="up"?[]:[...byLid.entries()].filter(([lid])=>!local.has(lid)&&!gset.has(lid)).map(e=>e[1]);
+    const total=ups.length+downs.length;let n=0,fail=0;
+    for(const it of ups){
+      n++;
+      try{gmap[it.id]=await gUpload(fid,it,p=>gs(`Uploading ${n}/${total}: ${it.name} (${p}%)`,Math.round(((n-1)+p/100)/total*90)+5));LS.set("gmap",gmap)}
+      catch(e){fail++;gs(`Upload failed for ${it.name}: ${e.message}`)}
+    }
+    for(const f of downs){
+      n++;gs(`Downloading ${n}/${total}: ${f.name}...`,Math.round((n-1)/total*90)+5);
+      try{
+        const b=await (await gf(`${API}/${f.id}?alt=media`)).blob(),type=f.appProperties.type||f.mimeType||b.type,blob=new Blob([b],{type});
+        await db("readwrite",st=>st.put({id:f.appProperties.lid,name:f.name,type,folder:(f.appProperties.folder||"general").slice(0,30),size:blob.size,blob}));
+        gmap[f.appProperties.lid]=f.id;LS.set("gmap",gmap);
+      }catch(e){fail++;gs(`Download failed for ${f.name}: ${e.message}`)}
+    }
+    LS.set("gmap",gmap);
+    gs("Syncing favorites, tags and XP...",96);
+    await gMeta(fid,mf);
+    await load();renderRank();renderHome();
+    gs(`Done. ${ups.length} uploaded, ${downs.length} downloaded${fail?`, ${fail} failed (run Sync again)`:""}.${warn}`,100);
+  }catch(e){gs("Sync stopped: "+e.message)}
+  G.busy=false;
+}
+$("#g-cid").value=G.cid;$("#g-cid").onchange=e=>{G.cid=e.target.value.trim();LS.set("gcid",G.cid)};
+$("#g-dir").value=LS.get("gdir","both");$("#g-dir").onchange=e=>LS.set("gdir",e.target.value);
+$("#g-auto").checked=LS.get("gauto",false);$("#g-auto").onchange=e=>LS.set("gauto",e.target.checked);
+async function gGo(){
+  if(!G.cid){gs("Paste your Client ID first (see the setup guide).");return false}
+  try{await loadGis();await gToken();return true}catch(e){gs("Sign-in failed: "+e.message);return false}
+}
+$("#g-in").onclick=async()=>{
+  if(G.tok){try{google.accounts.oauth2.revoke(G.tok)}catch(e){}G.tok=null;G.folder=null;LS.set("gok",0);$("#g-in").textContent="Sign in with Google";gs("Signed out.",0);return}
+  if(await gGo()){gs("Signed in.");gSync()}
+};
+$("#g-sync").onclick=async()=>{if(await gGo())gSync()};
+setTimeout(()=>{if(G.cid&&LS.get("gok",0)&&LS.get("gauto",false))loadGis().then(()=>gSync()).catch(e=>gs("Auto-sync could not start: "+e.message+". Tap Sign in."))},2500);
 
 if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();
 renderRank();load();
