@@ -348,6 +348,7 @@ header#top,main,.ticker{position:relative;z-index:1}
       <label>Sync direction<select id="g-dir"><option value="both">Upload and download</option><option value="up">Upload only</option><option value="down">Download only</option></select></label>
       <label class="chk"><input type="checkbox" id="g-auto"> Sync when I open the site (after first sign-in)</label>
       <div class="row"><button class="btn" id="g-in" style="margin-top:12px;min-height:48px;font-size:1.05rem">Sign in with Google</button><button class="btn alt" id="g-sync" style="margin-top:12px;min-height:48px;font-size:1.05rem">Sync now</button></div>
+      <button class="btn alt" id="g-dedupe" style="min-height:44px;font-size:1rem">Remove duplicates (here and on Drive)</button>
       <div class="bar"><i id="g-bar"></i></div>
       <div class="mut" id="g-stat" style="margin-top:8px">Not signed in.</div>
       <details style="margin-top:10px"><summary class="mut" style="min-height:36px">Setup guide (about 10 minutes)</summary>
@@ -1262,6 +1263,37 @@ async function gMeta(fid,mf){
   if(!id)id=(await (await gf(API,{method:"POST",headers:JSONH,body:JSON.stringify({name:"joi-meta.json",parents:[fid],mimeType:"application/json"})})).json()).id;
   await gf(`https://www.googleapis.com/upload/drive/v3/files/${id}?uploadType=media`,{method:"PATCH",headers:JSONH,body});
 }
+async function reId(o,n){
+  const rec=items.find(i=>i.id===o);if(!rec)return;
+  await db("readwrite",st=>st.put(Object.assign({},rec,{id:n})));
+  await db("readwrite",st=>st.delete(o));await db("readwrite",st=>st.delete(o),"t");
+  if(meta[o]){meta[n]=meta[n]||meta[o];delete meta[o];msave()}
+}
+async function gDedupe(){
+  if(G.busy)return;G.busy=true;
+  try{
+    const gm=LS.get("gmap",{}),size=i=>i.size||i.blob.size,groups=new Map();
+    items.forEach(i=>{const k=i.name+"|"+size(i);if(!groups.has(k))groups.set(k,[]);groups.get(k).push(i)});
+    const dropL=[];
+    groups.forEach(list=>{if(list.length<2)return;list.sort((a,b)=>(!!gm[b.id]-!!gm[a.id])||(parseInt(a.id)-parseInt(b.id)));list.slice(1).forEach(d=>dropL.push([d,list[0]]))});
+    gs("Checking Drive...",10);
+    const fid=await gFolder(),remote=(await gList(fid)).filter(f=>f.name!=="joi-meta.json"&&f.appProperties&&f.appProperties.lid);
+    const dropIds=new Set(dropL.map(x=>x[0].id)),rg=new Map(),dropR=[];
+    remote.forEach(f=>{const k=f.name+"|"+f.size;if(!rg.has(k))rg.set(k,[]);rg.get(k).push(f)});
+    rg.forEach(list=>{if(list.length<2)return;list.sort((a,b)=>(dropIds.has(a.appProperties.lid)-dropIds.has(b.appProperties.lid)));list.slice(1).forEach(f=>dropR.push(f))});
+    if(!dropL.length&&!dropR.length){gs("No duplicates found.",100);G.busy=false;return}
+    if(!confirm(`Remove ${dropL.length} duplicate clip(s) on this device and ${dropR.length} on Drive? Clips with the same name and the exact same size count as duplicates.`)){gs("Cancelled.",0);G.busy=false;return}
+    for(const [d,k] of dropL){
+      const m=meta[d.id];if(m){const t=mget(k.id);t.fav=t.fav||m.fav;t.tags=[...new Set([...t.tags,...m.tags])];t.plays=Math.max(t.plays,m.plays)}
+      await delItemLocal(d.id);delete gm[d.id];
+    }
+    LS.set("gmap",gm);msave();
+    let n=0;
+    for(const f of dropR){gs(`Removing duplicates from Drive ${++n}/${dropR.length}...`,20+Math.round(n/dropR.length*70));try{await gf(`${API}/${f.id}`,{method:"DELETE"})}catch(e){}}
+    await load();G.busy=false;gs("Duplicates removed. Syncing...",95);await gSync();return;
+  }catch(e){gs("Cleanup stopped: "+e.message)}
+  G.busy=false;
+}
 async function gSync(){
   if(G.busy)return;G.busy=true;
   try{
@@ -1276,6 +1308,15 @@ async function gSync(){
       gdel.splice(gdel.indexOf(lid),1);delete gmap[lid];
     }
     LS.set("gdel",gdel);
+    const loc0=new Set(items.map(i=>i.id)),pool=[...byLid.values()].filter(f=>!loc0.has(f.appProperties.lid));
+    let linked=0;
+    for(const it of items){
+      if(byLid.has(it.id))continue;
+      const k=it.name+"|"+(it.size||it.blob.size),ix=pool.findIndex(f=>f.name+"|"+f.size===k);
+      if(ix<0)continue;
+      const f=pool.splice(ix,1)[0];await reId(it.id,f.appProperties.lid);gmap[f.appProperties.lid]=f.id;linked++;
+    }
+    if(linked){LS.set("gmap",gmap);await load()}
     let warn="";
     const gone=items.filter(i=>gmap[i.id]&&!byLid.has(i.id));
     if(gone.length){
@@ -1303,7 +1344,7 @@ async function gSync(){
     gs("Syncing favorites, tags and XP...",96);
     await gMeta(fid,mf);
     await load();renderRank();renderHome();
-    gs(`Done. ${ups.length} uploaded, ${downs.length} downloaded${fail?`, ${fail} failed (run Sync again)`:""}.${warn}`,100);
+    gs(`Done. ${ups.length} uploaded, ${downs.length} downloaded${linked?`, ${linked} matched to files already on Drive`:""}${fail?`, ${fail} failed (run Sync again)`:""}.${warn}`,100);
   }catch(e){gs("Sync stopped: "+e.message)}
   G.busy=false;
 }
@@ -1319,6 +1360,7 @@ $("#g-in").onclick=async()=>{
   if(await gGo()){gs("Signed in.");gSync()}
 };
 $("#g-sync").onclick=async()=>{if(await gGo())gSync()};
+$("#g-dedupe").onclick=async()=>{if(await gGo())gDedupe()};
 setTimeout(()=>{if(G.cid&&LS.get("gok",0)&&LS.get("gauto",false))loadGis().then(()=>gSync()).catch(e=>gs("Auto-sync could not start: "+e.message+". Tap Sign in."))},2500);
 
 if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();
