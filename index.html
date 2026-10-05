@@ -159,6 +159,34 @@ h2{font-family:var(--disp);font-weight:400;font-size:1.55rem;text-transform:uppe
 #lock{position:fixed;inset:0;z-index:300;background:#050005;display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:24px;text-align:center}
 #lock input{max-width:240px;text-align:center;font-size:1.4rem;letter-spacing:.3em}
 .lite .tk,.lite .logo span,.lite .ov::after,.lite .warp,.lite .breathe{animation:none!important}
+/* ===== 3.0 app shell ===== */
+nav#nav{position:fixed;left:0;right:0;bottom:0;top:auto;z-index:50;display:flex;gap:2px;padding:6px 6px calc(6px + env(safe-area-inset-bottom));background:#0a030af2;border:0;border-top:1px solid var(--line);overflow:visible}
+nav#nav button{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:54px;padding:0;font:600 .68rem system-ui,sans-serif;letter-spacing:.02em;text-transform:none;background:none;border:0;color:var(--mut);border-radius:12px;box-shadow:none}
+nav#nav button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+nav#nav button.on{color:#fff;background:linear-gradient(180deg,#ff0a7830,transparent);box-shadow:none}
+nav#nav button.on svg{stroke:var(--pink)}
+body{padding-bottom:calc(78px + env(safe-area-inset-bottom))}
+.seg{display:none;gap:6px;margin:0 0 14px}
+.seg button{flex:1;min-height:42px;border-radius:12px;border:1px solid var(--line);background:#12050f;color:var(--mut);font:400 .95rem var(--disp);letter-spacing:.06em;text-transform:uppercase}
+.seg button.on{background:var(--pink);border-color:var(--pink);color:#fff;box-shadow:0 0 14px #ff0a7866}
+.ib{min-height:36px;min-width:36px;margin-left:auto;border-radius:50%;border:1px solid var(--line);background:#12050f;color:#fff;display:flex;align-items:center;justify-content:center}
+.ib svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
+header#top .chip{margin-left:0}
+#dlg{z-index:250}#cp{z-index:240;align-items:flex-start;padding-top:12vh}
+#cp .box{padding:10px}#cp input{margin:0 0 8px}
+.cpi{display:flex;justify-content:space-between;gap:10px;width:100%;min-height:44px;align-items:center;padding:0 12px;background:none;border:0;color:#fff;border-radius:10px;text-align:left;font-size:.9rem}
+.cpi small{color:var(--mut);white-space:nowrap}.cpi.on,.cpi:hover{background:#ff0a7826}
+#toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom));transform:translateX(-50%);padding:10px 16px;border-radius:22px;background:#140614f2;border:1px solid var(--pink);font-size:.85rem;opacity:0;transition:opacity .3s;pointer-events:none;z-index:230;max-width:90vw;text-align:center}
+@media(min-width:900px){
+  nav#nav{top:84px;bottom:0;right:auto;width:220px;flex-direction:column;justify-content:flex-start;gap:6px;padding:18px 12px;border-top:0;border-right:1px solid var(--line)}
+  nav#nav button{flex:0 0 auto;flex-direction:row;gap:12px;justify-content:flex-start;padding:0 16px;min-height:48px;font-size:.95rem}
+  body{padding-bottom:0}
+  header#top{max-width:none;margin:0;padding-left:22px;padding-right:22px}
+  main{max-width:1100px;margin:0 0 0 220px;padding:22px 28px 40px}
+  .lgrid{grid-template-columns:repeat(5,1fr)}.rrow .tl{flex:0 0 170px}
+  .fh{aspect-ratio:21/9}.qs{grid-template-columns:repeat(4,1fr)}.cards{grid-template-columns:repeat(3,1fr)}
+  #toast{bottom:24px}
+}
 .wall{transition:opacity .35s}
 #vtoast{position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom) + 16px);transform:translateX(-50%);padding:8px 14px;border-radius:20px;background:#000c;border:1px solid var(--pink);font-size:.8rem;opacity:0;transition:opacity .3s;pointer-events:none;z-index:4;white-space:nowrap}
 .fh{position:relative;aspect-ratio:16/10;border-radius:16px;overflow:hidden;border:1px solid var(--pink);box-shadow:0 0 30px #ff0a7844;margin-bottom:12px;background:#000}
@@ -214,20 +242,19 @@ header#top,main,.ticker{position:relative;z-index:1}
   <button class="btn" id="enter">I am 18 or older. Enter</button>
   <button class="btn alt" id="leave">Leave</button>
 </div>
-<header id="top"><div class="logo">JOI<span>HUB</span></div><sup class="ver">2.0</sup><span class="age">18+</span><button type="button" class="pnb" aria-label="Panic: hide everything" title="Panic (or press `)">🙈</button><span class="chip" id="chip">Lv 1</span><div class="hb"><i id="hbar"></i></div></header>
+<header id="top"><div class="logo">JOI<span>HUB</span></div><sup class="ver">3.0</sup><span class="age">18+</span><button type="button" class="ib" id="cmdk" aria-label="Search and commands" title="Search (Ctrl+K)"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></button><button type="button" class="pnb" aria-label="Panic: hide everything" title="Panic (or press `)">🙈</button><span class="chip" id="chip">Lv 1</span><div class="hb"><i id="hbar"></i></div></header>
 <div class="ticker"><div class="tk" id="tk"></div></div>
 <nav id="nav">
-  <button class="on" data-v="home">For you</button>
-  <button data-v="play">Play</button>
-  <button data-v="vis">Visual</button>
-  <button data-v="lib">Library</button>
-  <button data-v="rank">Rank</button>
-  <button data-v="statsv">Stats</button>
-  <button data-v="set">Settings</button>
+  <button class="on" data-v="home"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Home</button>
+  <button data-v="play"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M10 8.5l5.5 3.5-5.5 3.5z"/></svg>Play</button>
+  <button data-v="lib"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg>Library</button>
+  <button data-v="me"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4.5 4.5-6 8-6s7 1.5 8 6"/></svg>Profile</button>
+  <button data-v="set"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>Settings</button>
 </nav>
 <main>
+  <div class="seg" id="seg"></div>
   <section class="view on" id="home">
-    <h2>For you</h2>
+    <h2 id="greet">For you</h2>
     <div id="rows"></div>
   </section>
 
@@ -326,6 +353,7 @@ header#top,main,.ticker{position:relative;z-index:1}
     <h2>Rank</h2>
     <div class="box"><div id="emblem"></div><b id="rk2"></b><div class="bar"><i id="xpb2"></i></div><p class="mut" id="stats" style="margin-top:10px"></p></div>
     <div class="box"><b>Badges</b><div id="badges"></div></div>
+    <div class="box"><b>Rewards</b><p class="mut" style="margin:6px 0">Level up to unlock new looks.</p><div id="rewards"></div></div>
   </section>
 
   <section class="view" id="statsv">
@@ -383,6 +411,10 @@ header#top,main,.ticker{position:relative;z-index:1}
       <div class="row" style="margin-top:12px"><button class="btn alt" id="v-dl" style="min-height:46px;font-size:1rem">Download voice</button><button class="btn alt" id="v-test" style="min-height:46px;font-size:1rem">Test voice</button></div>
       <button class="btn alt" id="v-pre" style="min-height:46px;font-size:1rem">Pre-generate my script lines</button>
       <div class="bar"><i id="v-bar"></i></div><div class="mut" id="v-stat" style="margin-top:8px">Not downloaded yet.</div>
+    </div>
+    <div class="box">
+      <b>Profile</b>
+      <label>Display name<input type="text" id="p-name" maxlength="20" placeholder="What should we call you?" autocomplete="off"></label>
     </div>
     <div class="box">
       <b>Custom recipe</b>
@@ -459,16 +491,17 @@ header#top,main,.ticker{position:relative;z-index:1}
   <div class="row" style="width:100%;max-width:560px"><input type="text" id="pvtag" placeholder="Add tag, press Enter"><button class="btn alt" id="pvfav" style="margin:0">☆ Favorite</button></div>
   <div class="row" style="width:100%;max-width:560px"><button class="btn bad" id="pvdel" style="margin:0">Delete</button><button class="btn" id="pvclose" style="margin:0">Close</button></div></div>
 
+<div id="dlg" class="ov2"><div class="box"><h2 id="dg-t"></h2><p class="mut" id="dg-m" style="text-align:center"></p><input type="text" id="dg-in" style="display:none;margin-top:10px" autocomplete="off"><div class="row"><button class="btn alt" id="dg-no" style="margin-bottom:0">Cancel</button><button class="btn" id="dg-ok" style="margin-bottom:0">OK</button></div></div></div>
+<div id="cp" class="ov2"><div class="box"><input type="text" id="cp-in" placeholder="Search clips, start a mode, jump anywhere..." autocomplete="off" spellcheck="false"><div id="cp-list"></div></div></div>
+<div id="toast"></div>
 <div id="recap" class="ov2"><div class="box"><h2 id="rc-t">Session recap</h2><div id="rc-b"></div><button class="btn" id="rc-ok">Done</button></div></div>
-<div id="wn" class="ov2" style="display:none"><div class="box"><h2>JOI HUB 2.0</h2>
-  <div class="rcrow"><span>New modes</span><b>Endurance, Duel, Speedrun, Blitz, Ladder, Custom</b></div>
-  <div class="rcrow"><span>Records</span><b>Personal bests and a live pace marker</b></div>
-  <div class="rcrow"><span>Recap screen</span><b>XP, bests, level and rank ups</b></div>
-  <div class="rcrow"><span>Stats tab</span><b>14-day chart and history</b></div>
-  <div class="rcrow"><span>Custom recipes</span><b>Build your own sessions</b></div>
-  <div class="rcrow"><span>Privacy</span><b>Panic button and PIN lock</b></div>
-  <div class="rcrow"><span>Gestures</span><b>Tap to hide the UI, swipe to skip</b></div>
-  <div class="rcrow"><span>Also</span><b>Backup, Light performance mode</b></div>
+<div id="wn" class="ov2" style="display:none"><div class="box"><h2>JOI HUB 3.0</h2>
+  <div class="rcrow"><span>New layout</span><b>App-style navigation, wide desktop view</b></div>
+  <div class="rcrow"><span>Command bar</span><b>Ctrl+K or the search icon</b></div>
+  <div class="rcrow"><span>Campaign</span><b>7 missions with XP rewards</b></div>
+  <div class="rcrow"><span>Rewards</span><b>Unlock themes as you level</b></div>
+  <div class="rcrow"><span>Profile</span><b>Your name and a greeting</b></div>
+  <div class="rcrow"><span>Polish</span><b>Proper dialogs, notifications, settings jump bar</b></div>
   <button class="btn" id="wn-ok">Let's go</button></div></div>
 <div id="panic"><h1 id="pn-t">Meeting notes</h1><p>Agenda for Thursday: review the quarterly numbers, confirm the schedule for the next sprint, and follow up on open action items from last week.</p><p>Action items: send the updated draft to the team, book the room for the planning session, and collect feedback before the next review.</p><p>Next steps: circulate the summary, check in on blockers, and update the shared document.</p></div>
 <div id="lock"><div class="logo" style="font-size:2.4rem">JOI<span>HUB</span></div><span class="age">LOCKED</span><input type="password" inputmode="numeric" id="lk-in" autocomplete="off" placeholder="PIN"><button class="btn" id="lk-go" style="max-width:240px">Unlock</button><div class="mut" id="lk-err" style="color:#ff3366"></div></div>
@@ -514,7 +547,7 @@ async function load(){
 }
 
 /* ---------- tabs ---------- */
-$("#nav").onclick=e=>{const b=e.target.closest("button");if(!b)return;document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("on",x===b));document.querySelectorAll(".view").forEach(v=>v.classList.toggle("on",v.id===b.dataset.v));heroStop();if(b.dataset.v==="rank")renderRank();if(b.dataset.v==="home")renderHome();if(b.dataset.v==="statsv")renderStats()};
+/* navigation lives in the 3.0 block below */
 
 /* ---------- favorites, tags, taste ---------- */
 let meta=LS.get("meta",{});const DEF={fav:0,tags:[],plays:0,last:0},seenNow=new Set();let msT=null;
@@ -564,6 +597,7 @@ function folderTile(name){
 }
 function renderHome(){
   const box=$("#rows");if(!box)return;heroStop();box.innerHTML="";used.clear();
+  {const h=new Date().getHours(),g=h<5?"Still up":h<12?"Good morning":h<18?"Good afternoon":"Good evening";$("#greet").textContent=opt.name?g+", "+opt.name:g}
   const L=lvl(prof.xp),R=RANKS[Math.min(Math.floor((L-1)/2),RANKS.length-1)],day=new Date().toLocaleDateString("en-CA"),yday=new Date(Date.now()-864e5).toLocaleDateString("en-CA"),sk=LS.get("streak",{n:0,last:""}),sn=sk.last===day||sk.last===yday?sk.n:0;
   const sg=document.createElement("div");sg.className="sg";
   sg.innerHTML='<div class="sb"><b></b><small>day streak</small></div><div class="sb"><b></b><small>rank</small></div><div class="sb"><b></b><small>XP to next level</small></div>';
@@ -579,7 +613,7 @@ function renderHome(){
   dc.className="dc";dc.innerHTML='<small>Daily challenge</small><b></b><div class="mut"></div><button class="btn" type="button" style="min-height:48px;font-size:1.1rem"></button>';
   dc.querySelector("b").textContent=dl;
   dc.querySelector(".mut").textContent=dq.done?"Completed today. Come back tomorrow.":"Finish this mode today for +75 bonus XP.";
-  const db1=dc.querySelector("button");db1.textContent=dq.done?"Play again":"Accept";db1.onclick=()=>quick(dq.mode);box.append(dc);
+  const db1=dc.querySelector("button");db1.textContent=dq.done?"Play again":"Accept";db1.onclick=()=>quick(dq.mode);box.append(dc);campCard(box);
   const favs=poolFor("fav"),qs=document.createElement("div");qs.className="qs";
   const Q=[["🎲","Surprise me",()=>quick(pick(DMODES))],["📹","Camcorder",()=>quick(null,"cam")],["🚀","Overdrive wall",()=>quick(null,"overdrive")],favs.length?["★","Favorites session",()=>quick("standard",null,"fav")]:["🌀","Hypno swirl",()=>quick(null,"hypno")]];
   Q.forEach(([e,t,f])=>{const b=document.createElement("button");b.type="button";b.className="qb";b.innerHTML="<em></em>";b.firstChild.textContent=e;b.append(t);b.onclick=f;qs.append(b)});
@@ -725,11 +759,11 @@ $("#pvtag").onkeydown=e=>{
   e.target.value.split(",").map(x=>x.trim().toLowerCase().replace(/[^a-z0-9 _-]/g,"").slice(0,20)).filter(Boolean).forEach(t=>{if(!m.tags.includes(t))m.tags.push(t)});
   e.target.value="";msave();pvMeta();renderLib();
 };
-$("#pvdel").onclick=async()=>{if(!pvItem||!confirm("Delete this clip from your library?"))return;const id=pvItem.id;closePv();await delItem(id);load()};
+$("#pvdel").onclick=async()=>{if(!pvItem||!(await ask("Delete this clip?","It will be removed from this device.",{ok:"Delete",danger:true})))return;const id=pvItem.id;closePv();await delItem(id);load()};
 $("#more").onclick=()=>{shown+=60;renderLib()};
 $("#delf").onclick=async()=>{
   const n=items.filter(i=>i.folder===lf).length;
-  if(!confirm(`Delete the folder "${lf}" and its ${n} clips?`))return;
+  if(!(await ask("Delete folder?",`"${lf}" and its ${n} clips will be removed from this device.`,{ok:"Delete",danger:true})))return;
   for(const i of items.filter(i=>i.folder===lf))await delItem(i.id);
   lf="all";load();
 };
@@ -861,7 +895,7 @@ function parseRecipe(t){
   if(out.length>60)throw new Error("Maximum 60 phases.");
   return out;
 }
-function startSession(){
+async function startSession(){
   const f=$("#folder").value;
   pool=poolFor(f);
   if(!pool.length){$("#status").textContent="No media in this folder yet.";return}
@@ -871,7 +905,7 @@ function startSession(){
   S={bag:mkBag(pool),mode:m,n:0,fails:0,t:null,hud:null,sec:0,start:Date.now(),t0:Date.now(),st:null,bpm:60,over:false,steps,clean:false};
   S.total=steps?steps.length:UNSCALED.includes(m)?MODE_TOTAL[m]:Math.max(4,Math.round(MODE_TOTAL[m]*opt.rounds));
   if(m==="duel"){
-    const a=(prompt("Player 1 name?","Player 1")||"Player 1").slice(0,16),b=(prompt("Player 2 name?","Player 2")||"Player 2").slice(0,16);
+    const a=((await ask("Player 1","What's your name?",{input:"Player 1",ok:"Next"}))||"Player 1").slice(0,16),b=((await ask("Player 2","And yours?",{input:"Player 2",ok:"Start"}))||"Player 2").slice(0,16);
     S.duel={names:[a,b],times:[],i:0};
   }
   $("#fail").textContent=ENDLESS.includes(m)?"Tap out":"Fail";
@@ -987,6 +1021,7 @@ function end(quiet){
     if(m==="speedrun"&&S.done){base+=Math.max(0,Math.round((150-secs)/3));if(!pb.speedrun||secs<pb.speedrun){pb.speedrun=secs;pbNote=mmss(secs)}}
   }
   LS.set("pb",pb);
+  const cr=campAdvance(m,!!S.done,secs,surv);if(cr){bonus+=cr.xp;notes.push(["Mission complete: "+cr.t,"+"+cr.xp+" XP"])}
   const gain=Math.max(0,base)+bonus;
   prof.xp+=gain;prof.sessions++;prof.best=Math.max(prof.best,secs);prof.fails+=S.fails;if(S.done)prof.finishes++;
   if(m==="duel")prof.duels=(prof.duels||0)+1;
@@ -1015,7 +1050,7 @@ function recap(r){
   r.rows.forEach(([k,v])=>{const d=document.createElement("div"),a=document.createElement("span"),c=document.createElement("b");d.className="rcrow";a.textContent=k;c.textContent=v;d.append(a,c);b.append(d)});
   $("#recap").className="ov2 on"+(up?" pop":"");
 }
-$("#rc-ok").onclick=()=>{$("#recap").className="ov2"};
+$("#rc-ok").onclick=()=>{$("#recap").className="ov2";renderRewards()};
 $("#go").onclick=startSession;
 $("#exit").onclick=()=>end();
 $("#fail").onclick=fail;
@@ -1043,7 +1078,7 @@ $("#savescript").onclick=()=>{
   }catch(e){$("#serr").style.color="#ff3366";$("#serr").textContent="Not saved: "+e.message}
 };
 $("#resetscript").onclick=()=>{script=DEFAULT_SCRIPT;LS.set("script",null);$("#script").value=JSON.stringify(script,null,2);$("#serr").textContent="Default restored."};
-$("#wipe").onclick=()=>{if(confirm("Reset all XP and badges?")){prof={xp:0,sessions:0,best:0,fails:0,finishes:0};LS.set("prof",prof);renderRank()}};
+$("#wipe").onclick=async()=>{if(await ask("Reset progress?","This clears your XP, level and badges.",{ok:"Reset",danger:true})){prof={xp:0,sessions:0,best:0,fails:0,finishes:0};LS.set("prof",prof);renderRank();toast("Progress reset")}};
 
 /* ---------- visual modes ---------- */
 let V=null;const urls=new Map(),calm=matchMedia("(prefers-reduced-motion:reduce)").matches;
@@ -1571,7 +1606,7 @@ $("#bk-file").onchange=async e=>{
   const f=e.target.files[0];e.target.value="";if(!f)return;
   try{
     const d=JSON.parse(await f.text());if(!d||d.v!==2)throw new Error("this is not a JOI Hub backup");
-    if(!confirm("Replace your settings, favorites, XP and history with this backup? Your clips are not affected."))return;
+    if(!(await ask("Restore backup?","This replaces your settings, favorites, XP and history. Your clips are not affected.",{ok:"Restore"})))return;
     LS.set("opt",Object.assign({},d.opt,{ekey:opt.ekey}));LS.set("meta",d.meta||{});LS.set("prof",d.prof||{});LS.set("hist",d.hist||[]);
     LS.set("pb",d.pb||{});LS.set("streak",d.streak||{});LS.set("daily",d.daily||{});if(d.script)LS.set("script",d.script);if(d.recipe)LS.set("recipe",d.recipe);
     location.reload();
@@ -1586,8 +1621,8 @@ $("#recipe-save").onclick=()=>{
 };
 const applyPerf=()=>document.body.classList.toggle("lite",opt.perf==="light");
 $("#o-perf").value=opt.perf;$("#o-perf").onchange=e=>{opt.perf=e.target.value;LS.set("opt",opt);applyPerf()};applyPerf();
-function showNew(){if(LS.get("ver","")!=="2.0")$("#wn").style.display="flex"}
-$("#wn-ok").onclick=()=>{LS.set("ver","2.0");$("#wn").style.display="none"};
+function showNew(){if(LS.get("ver","")!=="3.0")$("#wn").style.display="flex"}
+$("#wn-ok").onclick=()=>{LS.set("ver","3.0");$("#wn").style.display="none"};
 {const a=$("#ientr").onclick,b=$("#iquiet").onclick;$("#ientr").onclick=()=>{a();showNew()};$("#iquiet").onclick=()=>{b();showNew()}}
 /* session gestures: tap hides the UI, swipe skips the clip */
 let gx=null;
@@ -1598,6 +1633,117 @@ $("#player").addEventListener("pointerup",e=>{
   if(Math.abs(dx)>60&&Math.abs(dy)<60)showClip();
   else if(Math.abs(dx)<10&&Math.abs(dy)<10&&dt<300){S.clean=!S.clean;$("#player").classList.toggle("clean",S.clean)}
 });
+
+/* ---------- 3.0: app shell, command bar, campaign, rewards, dialogs ---------- */
+const GROUPS={home:["home"],play:["play","vis"],lib:["lib"],me:["rank","statsv"],set:["set"]};
+const SEGL={play:"Sessions",vis:"Visual FX",rank:"Rank",statsv:"Stats"};
+function showView(id,g){
+  heroStop();
+  g=g||Object.keys(GROUPS).find(k=>GROUPS[k].includes(id));
+  document.querySelectorAll("#nav button").forEach(x=>x.classList.toggle("on",x.dataset.v===g));
+  document.querySelectorAll(".view").forEach(v=>v.classList.toggle("on",v.id===id));
+  const seg=$("#seg");seg.innerHTML="";
+  if(GROUPS[g].length>1)GROUPS[g].forEach(vid=>{const b=document.createElement("button");b.type="button";b.textContent=SEGL[vid];b.className=vid===id?"on":"";b.onclick=()=>showView(vid,g);seg.append(b)});
+  seg.style.display=GROUPS[g].length>1?"flex":"none";
+  if(id==="rank"){renderRank();renderRewards()}
+  if(id==="home")renderHome();
+  if(id==="statsv")renderStats();
+  window.scrollTo(0,0);
+}
+$("#nav").onclick=e=>{const b=e.target.closest("button");if(b)showView(GROUPS[b.dataset.v][0],b.dataset.v)};
+/* dialogs and toasts */
+function ask(title,msg,o){
+  o=o||{};
+  return new Promise(res=>{
+    const inp=$("#dg-in");
+    $("#dg-t").textContent=title;$("#dg-m").textContent=msg||"";
+    inp.style.display=o.input!=null?"block":"none";inp.value=o.input||"";
+    $("#dg-ok").textContent=o.ok||"OK";$("#dg-ok").className="btn"+(o.danger?" bad":"");
+    const done=v=>{$("#dlg").className="ov2";res(v)};
+    $("#dg-ok").onclick=()=>done(o.input!=null?inp.value:true);
+    $("#dg-no").onclick=()=>done(o.input!=null?null:false);
+    inp.onkeydown=e=>{if(e.key==="Enter")$("#dg-ok").click()};
+    $("#dlg").className="ov2 on";if(o.input!=null)setTimeout(()=>{inp.focus();inp.select()},50);
+  });
+}
+let toastT=null;
+function toast(t){const e=$("#toast");e.textContent=t;e.style.opacity=1;clearTimeout(toastT);toastT=setTimeout(()=>{e.style.opacity=0},2800)}
+/* command bar */
+let cpSel=0,cpList=[];
+function cmdItems(q){
+  q=q.trim().toLowerCase();const out=[],A=(label,hint,run)=>out.push({label,hint,run});
+  [["Home","home"],["Play","play"],["Visual FX","vis"],["Library","lib"],["Rank","rank"],["Stats","statsv"],["Settings","set"]].forEach(([n,v])=>A("Go to "+n,"Navigate",()=>showView(v)));
+  [...$("#mode").options].forEach(o=>A("Start: "+modeName(o.value),"Session",()=>quick(o.value)));
+  [...$("#vmode").options].forEach(o=>A("Visual: "+o.text,"Visual FX",()=>quick(null,o.value)));
+  A("Panic: hide everything","Privacy",panic);A("Export backup","Data",()=>$("#bk-export").click());
+  const acts=out.filter(x=>!q||x.label.toLowerCase().includes(q)).slice(0,q?6:6);
+  const clips=q?items.filter(i=>i.name.toLowerCase().includes(q)||mm(i.id).tags.some(t=>t.includes(q))).slice(0,8).map(i=>({label:i.name,hint:"Clip · "+i.folder,run:()=>{showView("lib");openPv(i)}})):[];
+  return [...clips,...acts];
+}
+function cpRender(){
+  cpList=cmdItems($("#cp-in").value);cpSel=0;const L=$("#cp-list");L.innerHTML="";
+  cpList.forEach((x,i)=>{const b=document.createElement("button"),a=document.createElement("span"),h=document.createElement("small");b.type="button";b.className="cpi"+(i===0?" on":"");a.textContent=x.label;h.textContent=x.hint;b.append(a,h);b.onclick=()=>cpRun(i);L.append(b)});
+}
+function cpRun(i){const x=cpList[i];if(!x)return;cpClose();x.run()}
+function cpOpen(){$("#cp").className="ov2 on";$("#cp-in").value="";cpRender();setTimeout(()=>$("#cp-in").focus(),30)}
+function cpClose(){$("#cp").className="ov2"}
+$("#cp-in").oninput=cpRender;
+$("#cp-in").onkeydown=e=>{
+  if(e.key==="ArrowDown"||e.key==="ArrowUp"){e.preventDefault();if(!cpList.length)return;cpSel=(cpSel+(e.key==="ArrowDown"?1:-1)+cpList.length)%cpList.length;[...$("#cp-list").children].forEach((b,i)=>b.classList.toggle("on",i===cpSel))}
+  else if(e.key==="Enter")cpRun(cpSel);else if(e.key==="Escape")cpClose();
+};
+$("#cp").onclick=e=>{if(e.target.id==="cp")cpClose()};
+$("#cmdk").onclick=cpOpen;
+document.addEventListener("keydown",e=>{
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="k"){e.preventDefault();cpOpen()}
+  else if(e.key==="/"&&!/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)&&!S&&!V){e.preventDefault();cpOpen()}
+});
+/* campaign */
+const CAMP=[
+  {t:"First light",d:"Finish a Standard session.",mode:"standard",test:r=>r.done},
+  {t:"Find your rhythm",d:"Finish a Slow burn session.",mode:"slowburn",test:r=>r.done},
+  {t:"Hold the line",d:"Last 3 minutes in Endurance.",mode:"endurance",test:r=>r.surv>=180},
+  {t:"Against the clock",d:"Finish a Speedrun in under 3 minutes.",mode:"speedrun",test:r=>r.done&&r.secs<180},
+  {t:"Step it up",d:"Finish the Ladder.",mode:"ladder",test:r=>r.done},
+  {t:"Chaos theory",d:"Finish a Blitz.",mode:"blitz",test:r=>r.done},
+  {t:"The long game",d:"Last 6 minutes in Endurance.",mode:"endurance",test:r=>r.surv>=360}
+];
+function campCard(box){
+  const c=LS.get("camp",{i:0}),i=c.i,d=document.createElement("div");d.className="dc";
+  if(i>=CAMP.length){d.innerHTML="<small></small><b>Complete</b><div class='mut'></div>";d.children[0].textContent="Campaign";d.children[2].textContent="You finished all "+CAMP.length+" missions. Legend.";box.append(d);return}
+  const m=CAMP[i];
+  d.innerHTML='<small></small><b></b><div class="mut"></div><div class="bar"><i></i></div><button class="btn" type="button" style="min-height:48px;font-size:1.1rem">Start mission</button>';
+  d.children[0].textContent="Campaign · Mission "+(i+1)+" of "+CAMP.length;d.children[1].textContent=m.t;
+  d.children[2].textContent=m.d+" Reward: +"+(100+i*25)+" XP";
+  d.querySelector(".bar i").style.width=(i/CAMP.length*100)+"%";
+  d.querySelector("button").onclick=()=>quick(m.mode);box.append(d);
+}
+function campAdvance(m,done,secs,surv){
+  const c=LS.get("camp",{i:0});if(c.i>=CAMP.length)return null;
+  const mi=CAMP[c.i];
+  if(m===mi.mode&&mi.test({done,secs,surv})){const xp=100+c.i*25;c.i++;LS.set("camp",c);toast("Mission complete: "+mi.t);return{t:mi.t,xp}}
+  return null;
+}
+/* rewards: themes unlock with level */
+const UNLOCK={ember:3,ocean:5,toxic:8,mono:10},ACCENT_LV=2;
+function renderRewards(){
+  const L=lvl(prof.xp),b=$("#rewards");b.innerHTML="";
+  [[ACCENT_LV,"Custom accent color"],[3,"Ember theme"],[5,"Ocean theme"],[8,"Toxic theme"],[10,"Mono theme"]].forEach(([lv,name])=>{
+    const r=document.createElement("div"),a=document.createElement("span"),c=document.createElement("b");r.className="rcrow";
+    a.textContent=name;c.textContent=L>=lv?"Unlocked":"Level "+lv;if(L>=lv)c.style.color="var(--cyan)";r.append(a,c);b.append(r);
+  });
+  [...$("#o-theme").options].forEach(o=>{const need=UNLOCK[o.value]||0;o.disabled=L<need&&opt.theme!==o.value;if(!o.dataset.n)o.dataset.n=o.textContent;o.textContent=o.dataset.n+(L<need?" (Level "+need+")":"")});
+  $("#o-accent").disabled=L<ACCENT_LV;
+}
+/* profile and settings jump bar */
+$("#p-name").value=opt.name||"";
+$("#p-name").onchange=e=>{opt.name=e.target.value.trim().slice(0,20);LS.set("opt",opt);toast("Saved")};
+{
+  const v=$("#set"),bar=document.createElement("div");bar.className="chips";
+  [...v.querySelectorAll(".box")].forEach(bx=>{const t=bx.querySelector("b");if(!t)return;const b=document.createElement("button");b.type="button";b.textContent=t.textContent;b.onclick=()=>bx.scrollIntoView({behavior:"smooth",block:"start"});bar.append(b)});
+  v.insertBefore(bar,v.children[1]);
+}
+renderRewards();
 
 /* ---------- Google Drive sync (runs only after you sign in) ---------- */
 const G={cid:LS.get("gcid",""),tok:null,exp:0,folder:null,busy:false};
