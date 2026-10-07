@@ -187,6 +187,10 @@ header#top .chip{margin-left:0}
   .fh{aspect-ratio:21/9}.qs{grid-template-columns:repeat(4,1fr)}.cards{grid-template-columns:repeat(3,1fr)}
   #toast{bottom:24px}
 }
+#pbar{position:absolute;top:0;left:0;right:0;height:3px;background:#fff2;z-index:4}
+#pbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--pink),var(--cyan));transition:width .6s}
+.ctl{display:flex;gap:8px;justify-content:center;margin-top:10px}
+.ctl button{min-height:40px;padding:0 16px;border-radius:20px;background:#000a;border:1px solid #fff5;color:#fff;font-weight:700;font-size:.8rem}
 .wall{transition:opacity .35s}
 #vtoast{position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom) + 16px);transform:translateX(-50%);padding:8px 14px;border-radius:20px;background:#000c;border:1px solid var(--pink);font-size:.8rem;opacity:0;transition:opacity .3s;pointer-events:none;z-index:4;white-space:nowrap}
 .fh{position:relative;aspect-ratio:16/10;border-radius:16px;overflow:hidden;border:1px solid var(--pink);box-shadow:0 0 30px #ff0a7844;margin-bottom:12px;background:#000}
@@ -317,6 +321,7 @@ header#top,main,.ticker{position:relative;z-index:1}
       </label>
       <div class="cards" id="vmc"></div>
       <label>Folder<select id="vfolder"></select></label>
+      <label>Switch all clips every<select id="vsw"><option value="0">Auto</option><option value="4000">4 seconds</option><option value="8000">8 seconds</option><option value="15000">15 seconds</option><option value="30000">30 seconds</option></select></label>
       <label>Videos playing at once (lower = smoother)
         <select id="vcap"><option value="0">Auto (recommended)</option><option value="2">2</option><option value="4">4</option><option value="6">6</option><option value="10">10</option></select>
       </label>
@@ -339,7 +344,8 @@ header#top,main,.ticker{position:relative;z-index:1}
       <p class="mut" style="margin-top:10px">Files stay on this device (browser storage). Nothing is uploaded anywhere. Duplicates are skipped. iPhone Safari can't pick whole folders, so use multi-select there.</p>
     </div>
     <div class="box">
-      <div class="mut" id="lstat"></div>
+      <div class="row" style="margin-bottom:8px"><input type="text" id="lq" placeholder="Search name or tag" autocomplete="off"><select id="lsort"><option value="new">Newest</option><option value="old">Oldest</option><option value="name">Name</option><option value="fav">Favorites first</option><option value="long">Longest</option></select></div>
+      <div class="mut" id="lstat"></div><div class="mut" id="lstore" style="font-size:.75rem;margin-bottom:6px"></div>
       <div class="chips" id="chips"></div>
       <div id="rec"></div>
       <div class="sub" id="lhead"></div>
@@ -413,6 +419,16 @@ header#top,main,.ticker{position:relative;z-index:1}
       <div class="bar"><i id="v-bar"></i></div><div class="mut" id="v-stat" style="margin-top:8px">Not downloaded yet.</div>
     </div>
     <div class="box">
+      <b>Help</b>
+      <div class="rcrow"><span>Search and commands</span><b>Ctrl+K or /</b></div>
+      <div class="rcrow"><span>Panic (hide everything)</span><b>🙈 button or ` key</b></div>
+      <div class="rcrow"><span>In a session: hide the UI</span><b>Tap the screen</b></div>
+      <div class="rcrow"><span>In a session: next clip</span><b>Swipe or Next clip</b></div>
+      <div class="rcrow"><span>In a session: fail / exit</span><b>F / Esc</b></div>
+      <div class="rcrow"><span>Grids: swap all clips now</span><b>Shuffle button</b></div>
+      <div class="rcrow"><span>Hold a library tile</span><b>Peek a preview</b></div>
+    </div>
+    <div class="box">
       <b>Profile</b>
       <label>Display name<input type="text" id="p-name" maxlength="20" placeholder="What should we call you?" autocomplete="off"></label>
     </div>
@@ -473,14 +489,14 @@ header#top,main,.ticker{position:relative;z-index:1}
 <div id="player">
   <video id="v" muted loop playsinline webkit-playsinline></video>
   <img id="im" alt="">
-  <div id="shade"></div><div id="ring"></div>
+  <div id="shade"></div><div id="ring"></div><div id="pbar"><i></i></div>
   <div class="top">
     <span class="pill" id="badge">READY</span>
     <span class="pill" id="prog" style="color:#fff;border-color:#fff4">1</span>
     <span style="display:flex;gap:6px"><button class="pnb" aria-label="Panic">🙈</button><button class="f" id="fail">Fail</button><button id="exit">Exit</button></span>
   </div>
   <div id="say">
-    <h1 id="main"></h1><p id="sub"></p><div id="tm"></div>
+    <h1 id="main"></h1><p id="sub"></p><div id="tm"></div><div class="ctl"><button type="button" id="pausebtn">Pause</button><button type="button" id="skipclip">Next clip</button></div>
     <div id="acts"><button id="pass" style="background:#00ff88;color:#000">Stage done</button><button id="nofail" style="background:#ff3366;color:#fff">Failed</button></div>
   </div>
   <div id="sheet"><div class="box"><h2 id="sh-t"></h2><p id="sh-d" class="mut"></p><button class="btn" id="sh-b">OK</button></div></div>
@@ -510,7 +526,7 @@ header#top,main,.ticker{position:relative;z-index:1}
   <div id="vtoast"></div>
   <div id="vbar">
     <span id="aspects" style="display:flex;gap:6px"><button data-a="r45">4:5</button><button data-a="r916">9:16</button><button data-a="r169">16:9</button></span>
-    <button class="pnb" aria-label="Panic">🙈</button><button id="nextlay">Layout</button><button id="vexit">Exit</button>
+    <button class="pnb" aria-label="Panic">🙈</button><button id="shuf">Shuffle</button><button id="nextlay">Layout</button><button id="vexit">Exit</button>
   </div>
 </div>
 
@@ -537,13 +553,17 @@ const dbp=new Promise((res,rej)=>{const r=indexedDB.open("joi",2);r.onupgradenee
 const db=(mode,fn,store="m")=>dbp.then(d=>new Promise((res,rej)=>{const t=d.transaction(store,mode),r=fn(t.objectStore(store));t.oncomplete=()=>res(r&&r.result);t.onerror=()=>rej(t.error)}));
 let items=[];
 const thumbs=new Map();
+async function storeInfo(){
+  try{const e=await navigator.storage.estimate();$("#lstore").textContent=`Storage: ${(e.usage/1e9).toFixed(2)} GB used of about ${(e.quota/1e9).toFixed(1)} GB available`}catch(x){}
+}
+let lqT=null;
 async function loadThumbs(){
   thumbs.forEach(v=>URL.revokeObjectURL(v.url));thumbs.clear();
   try{((await db("readonly",st=>st.getAll(),"t"))||[]).filter(r=>r.thumb).forEach(r=>thumbs.set(r.id,{url:URL.createObjectURL(r.thumb),dur:r.dur}))}catch(e){}
 }
 async function load(){
   try{items=(await db("readonly",st=>st.getAll()))||[]}catch(e){items=[];$("#status").textContent="Storage unavailable in this browser mode."}
-  await loadThumbs();renderLib();fillThumbs();
+  await loadThumbs();renderLib();fillThumbs();storeInfo();
 }
 
 /* ---------- tabs ---------- */
@@ -642,12 +662,16 @@ function renderLib(){
   }
   $("#status").textContent=items.length?"":"Add some media in the Library tab first.";
   if(lf!=="all"&&lf!=="fav"&&!folders().includes(lf)&&!(lf.startsWith("tag:")&&allTags().includes(lf.slice(4))))lf="all";
-  const sorted=[...items].sort((a,b)=>parseInt(b.id)-parseInt(a.id));
+  const newest=[...items].sort((a,b)=>parseInt(b.id)-parseInt(a.id)),q=($("#lq").value||"").trim().toLowerCase(),so=$("#lsort").value;
+  const sorted=newest.filter(i=>!q||i.name.toLowerCase().includes(q)||mm(i.id).tags.some(t=>t.includes(q)));
+  if(so==="old")sorted.reverse();else if(so==="name")sorted.sort((a,b)=>a.name.localeCompare(b.name));
+  else if(so==="fav")sorted.sort((a,b)=>(mm(b.id).fav?1:0)-(mm(a.id).fav?1:0));
+  else if(so==="long")sorted.sort((a,b)=>((thumbs.get(b.id)||{}).dur||0)-((thumbs.get(a.id)||{}).dur||0));
   $("#lstat").textContent=items.length?`${items.length} clips · ${folders().length} folders`:"";
   const ch=$("#chips");ch.innerHTML="";
   for(const f of ["all","fav",...folders(),...allTags().map(t=>"tag:"+t)]){const b=document.createElement("button");b.type="button";b.textContent=f==="all"?"All":lab(f);b.className=lf===f?"on":"";b.onclick=()=>{lf=f;shown=60;renderLib()};ch.append(b)}
   const pl=new Set(poolFor(lf)),list=sorted.filter(i=>pl.has(i)),rec=$("#rec");rec.innerHTML="";
-  if(lf==="all"&&items.length>6){const h=document.createElement("div");h.className="sub";h.textContent="Recently added";const row=document.createElement("div");row.className="rrow";sorted.slice(0,8).forEach(i=>row.append(tile(i)));rec.append(h,row)}
+  if(lf==="all"&&!q&&items.length>6){const h=document.createElement("div");h.className="sub";h.textContent="Recently added";const row=document.createElement("div");row.className="rrow";newest.slice(0,8).forEach(i=>row.append(tile(i)));rec.append(h,row)}
   $("#lhead").textContent=items.length?(lf==="all"?"All clips":lab(lf)):"";
   const g=$("#grid");g.innerHTML="";
   if(!items.length)g.innerHTML='<p class="mut" style="grid-column:1/-1">Nothing here yet. Add videos or images above.</p>';
@@ -908,7 +932,7 @@ async function startSession(){
     const a=((await ask("Player 1","What's your name?",{input:"Player 1",ok:"Next"}))||"Player 1").slice(0,16),b=((await ask("Player 2","And yours?",{input:"Player 2",ok:"Start"}))||"Player 2").slice(0,16);
     S.duel={names:[a,b],times:[],i:0};
   }
-  $("#fail").textContent=ENDLESS.includes(m)?"Tap out":"Fail";
+  $("#fail").textContent=ENDLESS.includes(m)?"Tap out":"Fail";$("#pausebtn").textContent="Pause";
   heroStop();musicPlay();$("#player").classList.add("on");$("#sheet").classList.remove("on");
   if(opt.wake&&navigator.wakeLock)navigator.wakeLock.request("screen").then(w=>wake=w).catch(()=>{});
   S.hud=setInterval(hud,1000);next();
@@ -944,7 +968,7 @@ function next(){
   }
   let main=cmd.main,sub=cmd.sub,say=null;
   if(nnn){const c=script.nnn[(S.n-1)%script.nnn.length];main=`Stage ${S.n}: ${c.main}`;sub=c.sub;say=c.main+(c.sub?". "+c.sub:"");bpm=0}
-  render(st,main,sub,st.toUpperCase()+(bpm?` · ${bpm} BPM`:""));
+  S.curBpm=bpm;render(st,main,sub,st.toUpperCase()+(bpm?` · ${bpm} BPM`:""));
   setBpm(bpm);showClip();speak(say||main+(sub?". "+sub:""));
   $("#acts").style.display=nnn?"flex":"none";
   if(nnn){$("#tm").textContent="";hud();return}
@@ -961,14 +985,15 @@ function tick(){$("#tm").textContent=String(Math.floor(S.sec/60)).padStart(2,"0"
 function hud(){
   if(!S||S.over)return;
   const e=Math.floor((Date.now()-S.start)/1000),pb=LS.get("pb",{}),p=$("#prog");
-  if(ENDLESS.includes(S.mode)){const b=pb[S.mode]||0;p.textContent="⏱ "+mmss(e)+(b?" · PB "+mmss(b):"");p.style.color=b&&e>b?"var(--cyan)":""}
+  if(ENDLESS.includes(S.mode)){const b=pb[S.mode]||0;p.textContent="⏱ "+mmss(e)+(b?" · PB "+mmss(b):"");p.style.color=b&&e>b?"var(--cyan)":"";$("#pbar i").style.width=b?Math.min(100,e/b*100)+"%":"0"}
   else if(S.mode==="speedrun"){const b=pb.speedrun;p.textContent=`⏱ ${mmss(e)} · ${S.n}/${S.total}`+(b?" · PB "+mmss(b):"")}
 }
 function render(st,main,sub,badge){
   $("#player").className="on s-"+st+(S&&S.clean?" clean":"");
-  $("#badge").textContent=badge;$("#main").textContent=main;$("#sub").textContent=sub;
+  S.badgeText=badge;$("#badge").textContent=badge;$("#main").textContent=main;$("#sub").textContent=sub;
   $("#prog").textContent=S.total>999?"Round "+S.n:`${Math.min(S.n,S.total)}/${S.total}`;
   $("#ring").style.setProperty("--c","");
+  $("#pbar i").style.width=(S.total>999?0:Math.min(S.n,S.total)/S.total*100)+"%";
 }
 function finish(){
   clearInterval(S.t);clearInterval(S.hud);setBpm(0);S.over=true;S.done=true;
@@ -1051,10 +1076,25 @@ function recap(r){
   $("#recap").className="ov2 on"+(up?" pop":"");
 }
 $("#rc-ok").onclick=()=>{$("#recap").className="ov2";renderRewards()};
+$("#pausebtn").onclick=()=>{
+  if(!S||S.over)return;
+  if(!S.paused){
+    S.paused=true;S.pAt=Date.now();clearInterval(S.t);clearInterval(S.hud);setBpm(0);
+    $("#v").pause();if(musEl)musEl.pause();stopTts();
+    $("#pausebtn").textContent="Resume";$("#badge").textContent="PAUSED";
+  }else{
+    const d=Date.now()-S.pAt;S.start+=d;S.t0+=d;S.paused=false;
+    $("#v").play().catch(()=>{});if(musEl)musEl.play().catch(()=>{});
+    $("#pausebtn").textContent="Pause";$("#badge").textContent=S.badgeText||"";
+    if(!NNN_MODES.includes(S.mode))S.t=setInterval(()=>{S.sec--;tick();if(S.sec<=0)next()},1000);
+    S.hud=setInterval(hud,1000);setBpm(S.curBpm||0);
+  }
+};
+$("#skipclip").onclick=()=>{if(S&&!S.over&&!S.paused)showClip()};
 $("#go").onclick=startSession;
 $("#exit").onclick=()=>end();
 $("#fail").onclick=fail;
-$("#pass").onclick=()=>{if(S&&!S.over)next()};
+$("#pass").onclick=()=>{if(S&&!S.over&&!S.paused)next()};
 $("#nofail").onclick=fail;
 document.addEventListener("keydown",e=>{if(!S)return;if(e.key==="f"||e.key==="F")fail();if(e.key==="Escape")end()});
 document.addEventListener("visibilitychange",()=>{if(S&&!document.hidden&&opt.wake&&navigator.wakeLock&&!wake)navigator.wakeLock.request("screen").then(w=>wake=w).catch(()=>{});if(S&&document.hidden)$("#v").pause();else if(S&&!S.over)$("#v").play().catch(()=>{})});
@@ -1097,10 +1137,10 @@ const FX={
   xerox:{cut:[500,900],tints:[""],zoom:.25,flash:"#fff",ov:"cam",gray:1},
   cyber:{cut:[350,800],tints:["#00f0ff35","#ff00aa35"],zoom:.2,flash:"#fffc",ov:"cyber"},
   hypno:{cut:[2500,4000],tints:["#ff007f33"],zoom:.12,flash:"#ff007f66",ov:"hypno"},
-  wall:{grid:1,rot:40000,cycle:3000,ov:""},
-  overdrive:{grid:1,rot:15000,cycle:1500,ov:"hypno",warp:1},
-  hypnowall:{grid:1,rot:40000,cycle:3000,ov:"hypno"},
-  gooncave:{grid:1,rot:40000,cycle:3000,ov:"lounge"}
+  wall:{grid:1,rot:60000,cycle:8000,ov:""},
+  overdrive:{grid:1,rot:30000,cycle:3500,ov:"hypno",warp:1},
+  hypnowall:{grid:1,rot:60000,cycle:8000,ov:"hypno"},
+  gooncave:{grid:1,rot:60000,cycle:8000,ov:"lounge"}
 };
 $("#vcap").value="0";
 function mk(it){
@@ -1123,7 +1163,7 @@ function vStart(){
   V={fx,pool:p,bag:mkBag(p),cap:(+$("#vcap").value)||(matchMedia("(pointer:coarse)").matches?4:8),auto:!(+$("#vcap").value),asp:"r45",li:0,last:null};
   heroStop();musicPlay();$("#vp").classList.add("on");
   $("#aspects").style.display=fx.grid?"none":"flex";
-  $("#nextlay").style.display=fx.grid?"block":"none";
+  $("#nextlay").style.display=fx.grid?"block":"none";$("#shuf").style.display=fx.grid?"block":"none";
   if(opt.wake&&navigator.wakeLock)navigator.wakeLock.request("screen").then(w=>wake=w).catch(()=>{});
   if(opt.perf==="light")V.cap=Math.min(V.cap,3);fx.grid?wallBuild():camStart();
   if(fx.grid)V.wd=setInterval(wallWatch,1500);
@@ -1196,33 +1236,45 @@ function freezeSoon(o,n){
   if(n<12)setTimeout(()=>freezeSoon(o,n+1),400);
 }
 function rotateStills(){
-  if(!V||!V.vids)return;
+  if(!V||!V.vids||V.swapping)return;
   const live=V.vids.filter(o=>o.live&&o.m),still=V.vids.filter(o=>!o.live&&o.c);
   while(live.length>V.cap){const o=live.splice(rnd(0,live.length-1),1)[0];if(!goStill(o))toThumb(o);still.push(o)}
   if(live.length<V.cap&&still.length){goLive(pick(still));return}
   if(still.length&&live.length){const t=pick(still),o=pick(live);if(!goStill(o))toThumb(o);goLive(t)}
 }
-/* swap ONE tile's clip at a time: only one extra decoder, never a whole new wall */
-function cycleOne(){
-  if(!V||!V.tiles||V.pool.length<=V.tiles.length)return;
-  const c=V.tiles.filter(o=>o.live&&o.m&&o.m.tagName==="VIDEO"&&o.m.readyState>=2&&!o.busy);
-  if(!c.length)return;
-  const o=pick(c),it=V.bag.next(V.tiles.map(t=>t.it));seen(it);
-  const old=o.m,m=mk(it);m.style.opacity=0;o.busy=true;o.el.append(m);
-  let done=false;
-  const swap=()=>{
-    if(done)return;done=true;o.busy=false;
-    if(o.dead||!V){dropVideo(m);return}
-    m.style.opacity=1;o.it=it;o.m=m;o.t0=Date.now();setTimeout(()=>dropVideo(old),300);
-  };
-  m.addEventListener("playing",swap,{once:true});
-  setTimeout(()=>{if(done)return;if(m.readyState>=2)swap();else{done=true;o.busy=false;dropVideo(m)}},2500);
+/* every tile changes clip at the same moment: freeze, load behind the frozen frames, reveal together */
+function swapAll(){
+  if(!V||V.swapping||!V.tiles||!V.tiles.length||V.pool.length<V.tiles.length)return;
+  const T=V.tiles;if(T[0].dead)return;
+  const cur=T.map(o=>o.it),picks=[];
+  for(let i=0;i<T.length;i++)picks.push(V.bag.next(picks.concat(V.pool.length>=T.length*2?cur:[])));
+  picks.forEach(seen);V.swapping=true;
+  T.forEach(o=>{if(o.m){if(!goStill(o))toThumb(o)}});
+  const liveIdx=new Set(T.map((o,i)=>i).sort(()=>Math.random()-.5).slice(0,V.cap)),waits=[];
+  T.forEach((o,i)=>{
+    o.it=picks[i];o.img=isImg(o.it);
+    if(liveIdx.has(i)||o.img){
+      const m=mk(o.it);o.m=m;o.live=true;o.t0=Date.now();
+      o.el.insertBefore(m,o.c||null);
+      waits.push(new Promise(r=>{if(m.tagName==="VIDEO")m.addEventListener("playing",r,{once:true});else{m.onload=r;m.onerror=r}}));
+    }else{if(o.c){o.c.remove();o.c=null}o.m=null;o.live=false;toThumb(o)}
+  });
+  V.vids=T.filter(o=>!o.img);
+  Promise.race([Promise.all(waits),new Promise(r=>setTimeout(r,2500))]).then(()=>{
+    if(!V||T[0].dead)return;
+    T.forEach(o=>{if(o.live&&o.c){o.c.remove();o.c=null}});
+    V.swapping=false;
+  });
 }
 function wallBuild(){
   if(!V)return;
   clearInterval(V.iv);clearInterval(V.sw);clearInterval(V.cy);
-  const st=$("#stage");(V.tiles||[]).forEach(o=>o.dead=true);
-  freezeAll(st);st.querySelectorAll(".wall").forEach(x=>x.remove());
+  const st=$("#stage"),old=V.shown||null;
+  V.swapping=true;
+  (V.shownTiles||[]).forEach(o=>{if(o.m){if(!goStill(o))toThumb(o)}});
+  (V.tiles||[]).forEach(o=>o.dead=true);
+  st.querySelectorAll(".wall").forEach(x=>{if(x!==old){freezeAll(x);x.remove()}});
+  if(old)old.style.zIndex=3;
   const lays=layList(),lay=lays[V.li%lays.length],land=innerWidth>innerHeight,w=document.createElement("div");
   w.className="wall"+(V.fx.warp&&!calm?" warp":"");
   const n=Math.min(lay==="hero"?4:lay,V.pool.length),hero=lay==="hero"&&n===4;
@@ -1237,12 +1289,17 @@ function wallBuild(){
   st.append(w);
   if(V.fx.ov&&!st.querySelector(".ov")){const o=document.createElement("div");o.className="ov ov-"+V.fx.ov;st.append(o)}
   tiles.filter(o=>o.img).forEach(o=>goLive(o));
-  const vids=V.vids=tiles.filter(o=>!o.img).sort(()=>Math.random()-.5);
-  vids.forEach((o,k)=>setTimeout(()=>{
-    if(o.dead||!V)return;goLive(o);if(k>=V.cap)freezeSoon(o,0);
-  },140*k));
+  const vids=V.vids=tiles.filter(o=>!o.img).sort(()=>Math.random()-.5),waits=[];
+  vids.forEach((o,k)=>{
+    if(k<V.cap){goLive(o);const m=o.m;waits.push(new Promise(r=>m.addEventListener("playing",r,{once:true})))}
+    else toThumb(o);
+  });
+  Promise.race([Promise.all(waits),new Promise(r=>setTimeout(r,2500))]).then(()=>{
+    if(!V||tiles[0].dead)return;
+    V.shown=w;V.shownTiles=tiles;if(old)old.remove();V.swapping=false;
+  });
   V.sw=setInterval(rotateStills,4000);
-  V.cy=setInterval(cycleOne,V.fx.cycle||3000);
+  V.cy=setInterval(swapAll,(+$("#vsw").value)||V.fx.cycle||8000);
   V.iv=setInterval(()=>{V.li++;wallBuild()},V.fx.rot);
 }
 function freezeAll(root){root.querySelectorAll("video").forEach(dropVideo)}
@@ -1267,6 +1324,7 @@ document.addEventListener("visibilitychange",()=>{if(V&&!document.hidden)documen
 $("#vgo").onclick=vStart;
 $("#vexit").onclick=vStop;
 $("#nextlay").onclick=()=>{if(V){V.li++;wallBuild()}};
+$("#shuf").onclick=()=>swapAll();
 $("#aspects").onclick=e=>{const b=e.target.closest("button");if(b&&V&&V.fr){V.asp=b.dataset.a;V.fr.className="frame "+V.asp}};
 document.addEventListener("keydown",e=>{if(V&&e.key==="Escape")vStop()});
 
@@ -1744,6 +1802,9 @@ $("#p-name").onchange=e=>{opt.name=e.target.value.trim().slice(0,20);LS.set("opt
   v.insertBefore(bar,v.children[1]);
 }
 renderRewards();
+
+$("#lq").oninput=()=>{clearTimeout(lqT);lqT=setTimeout(()=>{shown=60;renderLib()},200)};
+$("#lsort").onchange=()=>{shown=60;renderLib()};
 
 /* ---------- Google Drive sync (runs only after you sign in) ---------- */
 const G={cid:LS.get("gcid",""),tok:null,exp:0,folder:null,busy:false};
