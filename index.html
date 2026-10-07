@@ -85,6 +85,7 @@ textarea{min-height:260px;font-family:ui-monospace,Menlo,monospace;font-size:.75
 @keyframes bl{50%{opacity:0}}
 .wall{position:absolute;inset:0;display:grid;gap:2px;padding:2px;background:#000}
 #vp #vbar{z-index:8}
+#mzcd{display:none;border-color:var(--pink)!important;color:var(--pink)!important}
 #mzlayer{position:absolute;inset:0;z-index:6;pointer-events:none;overflow:hidden}
 #mzwash{position:absolute;inset:-35%;background:repeating-conic-gradient(#ff0a78 0 12deg,#00f0ff 12deg 24deg,#ffc400 24deg 36deg,#b0002f 36deg 48deg);mix-blend-mode:overlay;animation:spin 6s linear infinite;opacity:.2}
 #mzfl{position:absolute;inset:0;opacity:0}
@@ -353,6 +354,11 @@ header#top,main,.ticker{position:relative;z-index:1}
         <div class="mut" style="margin-top:12px">Sample files (your own audio: random slices get chopped, pitched and layered in)</div>
         <div class="row"><button class="btn alt" id="mzadd" style="margin:4px 0 0;min-height:44px;font-size:1rem">Add audio files</button><button class="btn bad" id="mzdel" style="margin:4px 0 0;min-height:44px;font-size:1rem">Clear</button></div>
         <input type="file" id="mzfile" accept="audio/*,video/*" multiple hidden><div class="mut" id="mzsmp" style="margin-top:6px">None</div>
+        <div class="mut" style="margin-top:12px">Countdown clip (your own audio that tells you when; the peak hits the moment it ends)</div>
+        <div class="row"><button class="btn alt" id="mzcdadd" style="margin:4px 0 0;min-height:44px;font-size:1rem">Choose clip</button><button class="btn alt" id="mzcdtest" style="margin:4px 0 0;min-height:44px;font-size:1rem">Test</button><button class="btn bad" id="mzcdclr" style="margin:4px 0 0;min-height:44px;font-size:1rem">Remove</button></div>
+        <input type="file" id="mzcdfile" accept="audio/*,video/*" hidden><div class="mut" id="mzcdname" style="margin-top:6px">None</div>
+        <label>Countdown plays<select id="mzcdwhen"><option value="0" selected>Into every peak</option><option value="2">Into the first peak after 2 min</option><option value="5">Into the first peak after 5 min</option><option value="10">Into the first peak after 10 min</option><option value="15">Into the first peak after 15 min</option><option value="20">Into the first peak after 20 min</option><option value="m">Only when I press the Countdown button</option></select></label>
+        <label>Peak length (how long the full chaos lasts after the countdown ends)<select id="mzpk"><option value="6000" selected>Short (6 sec)</option><option value="20000">Long (20 sec)</option><option value="45000">Extra long (45 sec)</option><option value="90000">Ride it out (90 sec)</option></select></label>
         <p class="mut" style="margin-top:10px;color:#ffcc00">Both modes strobe hard, shake, invert and play loud, so start with your volume low and tick Flash-safe if you are photosensitive.</p>
       </div>
       <p class="mut" style="margin-top:10px;color:#ffcc00">Warning: strobe, overdose and subliminal modes use rapid flashing. Skip them if you are photosensitive. If your device has "reduce motion" on, flashes are turned off and cuts slow down.</p>
@@ -575,7 +581,7 @@ header#top,main,.ticker{position:relative;z-index:1}
   <div id="vtoast"></div>
   <div id="vbar">
     <span id="aspects" style="display:flex;gap:6px"><button data-a="r45">4:5</button><button data-a="r916">9:16</button><button data-a="r169">16:9</button></span>
-    <button class="pnb" aria-label="Panic">🙈</button><button id="shuf">Shuffle</button><button id="nextlay">Layout</button><button id="vexit">Exit</button>
+    <button class="pnb" aria-label="Panic">🙈</button><button id="mzcd">Countdown</button><button id="shuf">Shuffle</button><button id="nextlay">Layout</button><button id="vexit">Exit</button>
   </div>
 </div>
 
@@ -1593,9 +1599,10 @@ function mzFx(){
 }
 function mzTick(){
   if(!MZ.on)return;
-  const now=performance.now(),e=now-MZ.pt,P=MZ.phase,was=MZ.peak;
+  const now=performance.now(),P=mzP(),e=Math.max(0,now-MZ.pt),was=MZ.peak;
+  if(MZ.cd&&MZ.cdwhen!=="m"&&!MZ.cdBusy&&!MZ.peak&&e>=P-MZ.cd.dur*1000&&e<P-300&&(MZ.cdAfter===0||(!MZ.cdDone&&now-MZ.t0>=MZ.cdAfter)))mzCountdown(false);
   if(e<P){MZ.l=.22+.72*Math.pow(e/P,1.35);MZ.peak=false}
-  else if(e<P+5500){MZ.l=1;MZ.peak=true}
+  else if(e<P+MZ.plen){MZ.l=1;MZ.peak=true}
   else{MZ.pt=now;MZ.l=.22;MZ.peak=false;MZ.risen=false;MZ.cyc++}
   if(!MZ.risen&&e>P-4200&&e<P){MZ.risen=true;mzRiser(4)}
   if(MZ.peak&&!was){
@@ -1614,9 +1621,9 @@ function mzStart(){
   ac=ac||new (window.AudioContext||window.webkitAudioContext)();if(ac.state==="suspended")ac.resume();
   const lv=+$("#mzint").value||2,aud=$("#mzaud").value;
   MZ={on:true,l:.22,peak:false,risen:false,cyc:0,bpm:110,pt:performance.now(),phase:[0,70000,50000,34000][lv],
-      synth:aud==="all"||aud==="synth",clips:aud==="all"||aud==="clips",samples:(aud==="all"||aud==="samples")&&mzBank.length>0,beat:aud==="all"||aud==="synth"||aud==="samples",src:new WeakMap()};
-  if(aud!=="off"){mzMakeBus()}
-  else{mzMakeBus();MZ.out.gain.value=0}
+      synth:aud==="all"||aud==="synth",clips:aud==="all"||aud==="clips",samples:(aud==="all"||aud==="samples")&&mzBank.length>0,beat:aud==="all"||aud==="synth"||aud==="samples",src:new WeakMap(),cd:null,cdBusy:false,cdDone:false,t0:performance.now(),cdwhen:$("#mzcdwhen").value,cdAfter:(+$("#mzcdwhen").value||0)*60000,plen:+$("#mzpk").value||6000};
+  mzMakeBus();if(aud==="off")MZ.out.gain.value=0;MZ.og=MZ.out.gain.value;
+  mzCdPrep();$("#mzcd").style.display="block";
   const lay=document.createElement("div");lay.id="mzlayer";
   lay.innerHTML='<div id="mzwash"></div><div id="mzfl"></div><div id="mzx"></div>';
   $("#vp").append(lay);MZ.wash=lay.querySelector("#mzwash");MZ.fl=lay.querySelector("#mzfl");MZ.layer=lay.querySelector("#mzx");MZ.lay=lay;
@@ -1630,6 +1637,8 @@ function mzStop(){
   ["vt","bt","xt","ft"].forEach(k=>clearTimeout(MZ[k]));["tk","ct","pk"].forEach(k=>clearInterval(MZ[k]));
   try{MZ.out.gain.setTargetAtTime(0,ac.currentTime,.05);setTimeout(()=>{try{MZ.out.disconnect()}catch(e){}},400)}catch(e){}
   if(MZ.lay)MZ.lay.remove();
+  try{if(MZ.cs){MZ.cs.stop();MZ.cs=null}}catch(e){}
+  $("#mzcd").style.display="none";
   const st=$("#stage");st.style.filter="";st.getAnimations().forEach(a=>a.cancel());
 }
 async function mzBankLoad(){try{const r=await db("readonly",st=>st.get("mzbank"),"t");if(r&&r.files){mzBank=r.files.map(f=>({blob:f.blob,name:f.name}));$("#mzsmp").textContent=mzBank.length+" sample file"+(mzBank.length>1?"s":"")+": "+mzBank.map(x=>x.name).join(", ")}}catch(e){}}
@@ -1642,6 +1651,42 @@ $("#mzfile").onchange=async e=>{
 };
 $("#mzdel").onclick=async()=>{await db("readwrite",st=>st.delete("mzbank"),"t");mzBank=[];$("#mzsmp").textContent="None"};
 mzBankLoad();
+
+/* countdown clip: peak is timed to land exactly when the clip ends */
+let mzCdBlob=null;
+const mzP=()=>Math.max(MZ.phase,MZ.cd?MZ.cd.dur*1000+800:0);
+async function mzCdPrep(){
+  const M=MZ;if(!mzCdBlob)return;
+  try{const ab=await ac.decodeAudioData(await mzCdBlob.blob.arrayBuffer());if(MZ===M&&M.on)M.cd={ab,dur:ab.duration}}catch(e){vtoast("Could not read the countdown clip")}
+}
+function mzCountdown(manual){
+  if(!MZ.on)return;
+  if(!MZ.cd){vtoast(mzCdBlob?"Countdown clip still loading":"Add a countdown clip in Mayhem settings first");return}
+  if(MZ.cdBusy||MZ.peak)return;
+  const M=MZ,P=mzP();
+  if(manual){MZ.pt=performance.now()-(P-MZ.cd.dur*1000);MZ.risen=false}
+  MZ.cdBusy=true;
+  const s=ac.createBufferSource();s.buffer=MZ.cd.ab;const g=ac.createGain();g.gain.value=1.4;s.connect(g).connect(ac.destination);
+  MZ.cs=s;s.start();
+  const t=ac.currentTime;MZ.out.gain.setTargetAtTime(MZ.og*.35,t,.12);
+  s.onended=()=>{
+    if(MZ!==M||!M.on)return;
+    M.cdBusy=false;M.cs=null;if(M.cdAfter>0)M.cdDone=true;
+    M.out.gain.setTargetAtTime(M.og,ac.currentTime,.05);
+  };
+  vtoast("Countdown: "+Math.round(MZ.cd.dur)+"s to peak");
+}
+$("#mzcd").onclick=()=>mzCountdown(true);
+async function mzCdLoad(){try{const r=await db("readonly",st=>st.get("mzcount"),"t");if(r&&r.blob){mzCdBlob=r;$("#mzcdname").textContent=r.name}}catch(e){}}
+$("#mzcdadd").onclick=()=>$("#mzcdfile").click();
+$("#mzcdfile").onchange=async e=>{const f=e.target.files[0];if(!f)return;await db("readwrite",st=>st.put({id:"mzcount",blob:f,name:f.name}),"t");mzCdBlob={blob:f,name:f.name};$("#mzcdname").textContent=f.name;e.target.value=""};
+$("#mzcdclr").onclick=async()=>{await db("readwrite",st=>st.delete("mzcount"),"t");mzCdBlob=null;$("#mzcdname").textContent="None"};
+$("#mzcdtest").onclick=async()=>{
+  if(!mzCdBlob){toast("Choose a countdown clip first");return}
+  ac=ac||new (window.AudioContext||window.webkitAudioContext)();if(ac.state==="suspended")ac.resume();
+  try{const ab=await ac.decodeAudioData(await mzCdBlob.blob.arrayBuffer()),s=ac.createBufferSource(),g=ac.createGain();s.buffer=ab;g.gain.value=1.4;s.connect(g).connect(ac.destination);s.start()}catch(e){toast("Could not play that file")}
+};
+mzCdLoad();
 
 
 /* ---------- site chrome ---------- */
