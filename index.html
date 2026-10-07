@@ -89,8 +89,7 @@ textarea{min-height:260px;font-family:ui-monospace,Menlo,monospace;font-size:.75
 #mzlayer{position:absolute;inset:0;z-index:6;pointer-events:none;overflow:hidden}
 #mzwash{position:absolute;inset:-35%;background:repeating-conic-gradient(#ff0a78 0 12deg,#00f0ff 12deg 24deg,#ffc400 24deg 36deg,#b0002f 36deg 48deg);mix-blend-mode:overlay;animation:spin 6s linear infinite;opacity:.2}
 #mzfl{position:absolute;inset:0;opacity:0}
-#mzwash.lite{mix-blend-mode:normal;animation:none;inset:0;background:radial-gradient(circle,transparent 35%,#ff0a78 140%)}
-.mzt{position:absolute;font-family:var(--disp);letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;line-height:1;-webkit-text-stroke:2px #000;text-shadow:0 0 10px #000}
+.mzt{position:absolute;font-family:var(--disp);letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;line-height:1;-webkit-text-stroke:2px #000;text-shadow:0 0 18px #000,0 0 44px #ff0a78}
 .tile{position:relative;overflow:hidden;background:#000;min-width:0;min-height:0}
 #vbar{position:absolute;top:calc(env(safe-area-inset-top) + 10px);right:10px;display:flex;gap:6px;z-index:3}
 #vbar button{min-height:44px;padding:0 12px;border-radius:22px;background:#000b;border:1px solid #fff5;color:#fff;font-weight:700;font-size:.8rem}
@@ -350,7 +349,6 @@ header#top,main,.ticker{position:relative;z-index:1}
         <div class="mut" style="color:var(--pink);font-weight:700">Mayhem settings (Brain melt and Total overload)</div>
         <label>Intensity (how fast it builds to each peak)<select id="mzint"><option value="1">Hot (~70s build)</option><option value="2" selected>Wild (~50s build)</option><option value="3">Max (~35s build)</option></select></label>
         <label>Audio<select id="mzaud"><option value="all" selected>Everything (synth voices + your clip audio + samples)</option><option value="synth">Synth voices + beat only</option><option value="clips">Your clips' own audio only</option><option value="samples">Your sample files + beat only</option><option value="off">Silent</option></select></label>
-        <label>Performance<select id="mzperf"><option value="smooth" selected>Smooth (recommended: lighter effects, fewer videos at once)</option><option value="full">Full (heavy filters, 12-tile grids, fast seeking; needs a strong device)</option></select></label>
         <label>Loudness<select id="mzvol"><option value=".5">Medium</option><option value=".85" selected>Loud</option><option value="1.2">Max (check your volume first)</option></select></label>
         <label class="chk"><input type="checkbox" id="mzsafe"> Flash-safe (no flashes, invert or shaking; keeps the audio and cuts)</label>
         <div class="mut" style="margin-top:12px">Sample files (your own audio: random slices get chopped, pitched and layered in)</div>
@@ -1229,7 +1227,7 @@ function vStart(){
   $("#aspects").style.display=fx.grid?"none":"flex";
   $("#nextlay").style.display=fx.grid?"block":"none";$("#shuf").style.display=fx.grid?"block":"none";
   if(opt.wake&&navigator.wakeLock)navigator.wakeLock.request("screen").then(w=>wake=w).catch(()=>{});
-  if(opt.perf==="light")V.cap=Math.min(V.cap,3);if(fx.chaos&&!mzFull())V.cap=Math.min(V.cap,COARSE?3:4);fx.grid?wallBuild():camStart();
+  if(opt.perf==="light")V.cap=Math.min(V.cap,3);fx.grid?wallBuild():camStart();
   if(fx.grid)V.wd=setInterval(wallWatch,1500);
   if(fx.chaos)mzStart();
 }
@@ -1266,13 +1264,12 @@ function camCut(){
   const tint=pick(x.tints);
   if(calm)tl.style.background=tint;
   else{tl.style.background=x.flash;setTimeout(()=>{if(V)tl.style.background=tint},70)}
-  const l=x.chaos&&MZ.on?MZ.l:0,lo=Math.max(x.chaos?(mzFull()?90:170):0,Math.round(x.cut[0]*(1-l*.7))),hi=Math.max(x.chaos?(mzFull()?170:330):0,Math.round(x.cut[1]*(1-l*.8)));
+  const l=x.chaos&&MZ.on?MZ.l:0,lo=Math.max(x.chaos?90:0,Math.round(x.cut[0]*(1-l*.7))),hi=Math.max(x.chaos?170:0,Math.round(x.cut[1]*(1-l*.8)));
   V.t=setTimeout(camCut,rnd(Math.max(lo,calm?700:0),Math.max(hi,calm?900:0)));
 }
 const LAYS=[6,8,10,"hero"];
 function vtoast(t){const e=$("#vtoast");e.textContent=t;e.style.opacity=1;clearTimeout(e._t);e._t=setTimeout(()=>{e.style.opacity=0},2800)}
-const mzFull=()=>!!($("#mzperf")&&$("#mzperf").value==="full");
-const COARSE=matchMedia("(pointer:coarse)").matches,layList=()=>COARSE||opt.perf==="light"?[4,6,"hero"]:(V&&V.fx.chaos?(mzFull()?[6,8,12,"hero"]:[4,6,"hero"]):LAYS);
+const COARSE=matchMedia("(pointer:coarse)").matches,layList=()=>COARSE||opt.perf==="light"?[4,6,"hero"]:(V&&V.fx.chaos?[6,8,12,"hero"]:LAYS);
 function goLive(o,it){
   if(it)o.it=it;
   const m=mk(o.it);o.m=m;o.live=true;o.t0=Date.now();
@@ -1564,7 +1561,6 @@ function mzShake(){
 }
 function mzFilter(){
   if(mzCalm())return;
-  if(!mzFull()){mzFlash(pick(["#ff0a7899","#00f0ff88","#ffc40088","#ffffffaa"]),rnd(90,180));return}
   const st=$("#stage"),l=MZ.l,r=Math.random(),F=r<.35?`hue-rotate(${rnd(40,320)}deg) saturate(${(1.6+l*2).toFixed(1)}) contrast(${(1.15+l*.4).toFixed(2)})`:r<.55&&l>.45?"invert(1) hue-rotate(180deg)":r<.75?`saturate(0) contrast(${(1.6+l).toFixed(1)})`:r<.9?"drop-shadow(10px 0 0 #ff00aa) drop-shadow(-10px 0 0 #00f0ff) saturate(1.8)":`brightness(${(1.6+l).toFixed(1)}) saturate(2.4)`;
   st.style.filter=F;clearTimeout(MZ.ft);MZ.ft=setTimeout(()=>{st.style.filter=""},rnd(70,200)+l*80);
 }
@@ -1572,7 +1568,7 @@ function mzTiles(){
   if(!V||!V.tiles)return;
   const T=V.tiles.filter(o=>!o.dead);if(!T.length)return;
   const o=pick(T),r=Math.random();
-  if(r<.45&&o.m&&o.m.tagName==="VIDEO"&&o.m.duration>3&&(mzFull()||performance.now()-(MZ.sk||0)>1800)){MZ.sk=performance.now();try{o.m.currentTime=Math.random()*(o.m.duration-1)}catch(e){}}
+  if(r<.45&&o.m&&o.m.tagName==="VIDEO"&&o.m.duration>3){try{o.m.currentTime=Math.random()*(o.m.duration-1)}catch(e){}}
   else if(r<.65){o.el.style.transform=o.el.style.transform?"":"scaleX(-1)"}
   else if(r<.85&&!mzCalm()){const f=document.createElement("div");f.style.cssText=`position:absolute;inset:0;z-index:3;background:${pick(["#fff","#ff0a78","#ffc400","#00f0ff"])};pointer-events:none`;o.el.append(f);f.animate([{opacity:.85},{opacity:0}],{duration:160}).onfinish=()=>f.remove()}
   else if(o.m&&o.m.tagName==="VIDEO"){const s=1+Math.random()*.6;o.m.style.transform=`scale(${s.toFixed(2)})`;setTimeout(()=>{if(o.m)o.m.style.transform=""},rnd(200,600))}
@@ -1580,7 +1576,7 @@ function mzTiles(){
 /* sudden grid of different clips over a single-screen cut */
 function mzBurst(){
   if(!V||V.fx.grid||MZ.burst||V.pool.length<2)return;
-  const n=mzFull()?pick(MZ.l>.7?[4,9,9,16]:[4,4,9]):4,side=Math.sqrt(n),w=document.createElement("div");
+  const n=pick(MZ.l>.7?[4,9,9,16]:[4,4,9]),side=Math.sqrt(n),w=document.createElement("div");
   w.className="wall";w.style.zIndex=4;w.style.gridTemplateColumns=`repeat(${side},1fr)`;w.style.gridTemplateRows=`repeat(${side},1fr)`;
   const fr=V.fr;if(!fr)return;
   const picks=[],items=[];for(let i=0;i<n;i++){const it=V.bag.next(picks);picks.push(it);items.push(it)}
@@ -1590,7 +1586,7 @@ function mzBurst(){
   });
   MZ.burst=w;fr.append(w);
   const dur=rnd(700,1500)+(MZ.peak?600:0);
-  const sw=setInterval(()=>{vids.forEach(v=>{if(v.duration>3&&Math.random()<.5){try{v.currentTime=Math.random()*(v.duration-1)}catch(e){}}})},mzFull()?260:450);
+  const sw=setInterval(()=>{vids.forEach(v=>{if(v.duration>3&&Math.random()<.5){try{v.currentTime=Math.random()*(v.duration-1)}catch(e){}}})},260);
   setTimeout(()=>{clearInterval(sw);vids.forEach(dropVideo);w.remove();MZ.burst=null},dur);
 }
 function mzFx(){
@@ -1599,7 +1595,7 @@ function mzFx(){
   if(r<.22)mzFilter();else if(r<.36)mzShake();else if(r<.5)mzText();else if(r<.62)mzFlash(pick(["#fff","#ff0a78","#ffc400","#00f0ff"]),rnd(80,200));
   else if(r<.8&&V&&V.fx.grid)mzTiles();else if(r<.9&&V&&!V.fx.grid&&l>.2)mzBurst();else if(V&&V.fx.grid){mzTiles();mzTiles()}
   if(V&&V.fx.grid)mzTiles();
-  MZ.xt=setTimeout(mzFx,Math.max(mzFull()?90:170,rnd(700,1400)-l*900));
+  MZ.xt=setTimeout(mzFx,Math.max(90,rnd(700,1400)-l*900));
 }
 function mzTick(){
   if(!MZ.on)return;
@@ -1617,9 +1613,8 @@ function mzTick(){
   }
   if(!MZ.peak&&was){mzText("BREATHE",true);document.querySelector("#mzwash").style.opacity=.15}
   MZ.bpm=Math.round(104+MZ.l*(MZ.peak?88:70));
-  MZ.wash.classList.toggle("lite",!mzFull());
-  MZ.wash.style.opacity=mzCalm()?.1:mzFull()?(.07+MZ.l*.3).toFixed(2):(.05+MZ.l*.4).toFixed(2);
-  if(mzFull())MZ.wash.style.animationDuration=(9-MZ.l*7).toFixed(1)+"s";
+  MZ.wash.style.opacity=mzCalm()?.1:(.07+MZ.l*.3).toFixed(2);
+  MZ.wash.style.animationDuration=(9-MZ.l*7).toFixed(1)+"s";
 }
 function mzStart(){
   if(MZ.on)return;
