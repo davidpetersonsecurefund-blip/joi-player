@@ -187,6 +187,16 @@ header#top .chip{margin-left:0}
   .fh{aspect-ratio:21/9}.qs{grid-template-columns:repeat(4,1fr)}.cards{grid-template-columns:repeat(3,1fr)}
   #toast{bottom:24px}
 }
+#flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}
+#main span{display:inline-block;animation:kin .55s cubic-bezier(.2,.9,.3,1.2) both}
+@keyframes kin{from{opacity:0;transform:translateY(16px) scale(.9)}to{opacity:1;transform:none}}
+.mx{flex:0 0 160px;background:#140614;border:1px solid var(--line);border-radius:14px;padding:8px}
+.mo{display:grid;grid-template-columns:1fr 1fr;gap:2px;aspect-ratio:1/1;border-radius:10px;overflow:hidden;background:#0b050c;margin-bottom:6px}
+.mo img{width:100%;height:100%;object-fit:cover}
+.mx b{display:block;font:400 1rem var(--disp);letter-spacing:.04em;text-transform:uppercase}.mx small{color:var(--mut)}
+.mx .row{gap:6px;margin-top:6px}.mx button{min-height:36px;border-radius:10px;background:#12050f;border:1px solid var(--line);color:#fff;font-size:.8rem;font-weight:700}
+#plan .box .row .btn{margin-top:10px}
+@media (prefers-reduced-motion:reduce){#main span{animation:none!important}}
 #pbar{position:absolute;top:0;left:0;right:0;height:3px;background:#fff2;z-index:4}
 #pbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--pink),var(--cyan));transition:width .6s}
 .ctl{display:flex;gap:8px;justify-content:center;margin-top:10px}
@@ -246,7 +256,7 @@ header#top,main,.ticker{position:relative;z-index:1}
   <button class="btn" id="enter">I am 18 or older. Enter</button>
   <button class="btn alt" id="leave">Leave</button>
 </div>
-<header id="top"><div class="logo">JOI<span>HUB</span></div><sup class="ver">3.0</sup><span class="age">18+</span><button type="button" class="ib" id="cmdk" aria-label="Search and commands" title="Search (Ctrl+K)"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></button><button type="button" class="pnb" aria-label="Panic: hide everything" title="Panic (or press `)">🙈</button><span class="chip" id="chip">Lv 1</span><div class="hb"><i id="hbar"></i></div></header>
+<header id="top"><div class="logo">JOI<span>HUB</span></div><sup class="ver">4.0</sup><span class="age">18+</span><button type="button" class="ib" id="cmdk" aria-label="Search and commands" title="Search (Ctrl+K)"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></button><button type="button" class="pnb" aria-label="Panic: hide everything" title="Panic (or press `)">🙈</button><span class="chip" id="chip">Lv 1</span><div class="hb"><i id="hbar"></i></div></header>
 <div class="ticker"><div class="tk" id="tk"></div></div>
 <nav id="nav">
   <button class="on" data-v="home"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Home</button>
@@ -381,6 +391,9 @@ header#top,main,.ticker{position:relative;z-index:1}
       <label class="chk"><input type="checkbox" id="o-ui"> UI sounds</label>
       <label class="chk"><input type="checkbox" id="o-reel"> Living background (dim video reel)</label>
       <label>Metronome sound<select id="o-msound"><option value="beat">Beat (kick and hat)</option><option value="click">Click</option></select></label>
+      <label>Beat effects (pulse and beat-synced cuts)<select id="o-beatfx"><option value="full">Pulse and cuts</option><option value="pulse">Pulse only</option><option value="off">Off</option></select></label>
+      <label>Adaptive soundtrack (plays in sessions)<select id="o-ost"><option value="on">Full</option><option value="low">Low</option><option value="off">Off</option></select></label>
+      <label class="chk"><input type="checkbox" id="o-smart"> Smart shuffle (favorites and unseen clips appear more)</label>
       <label>Performance<select id="o-perf"><option value="balanced">Balanced</option><option value="light">Light (smoother on slower phones)</option></select></label>
       <div class="mut" style="margin-top:12px">Session music (loops under sessions and visual modes)</div>
       <div class="row"><button class="btn alt" id="musadd" style="margin:4px 0 0;min-height:44px;font-size:1rem">Choose audio file</button><button class="btn bad" id="musdel" style="margin:4px 0 0;min-height:44px;font-size:1rem">Remove</button></div>
@@ -447,6 +460,14 @@ header#top,main,.ticker{position:relative;z-index:1}
       <div class="mut" id="pin-stat" style="margin-top:8px"></div>
     </div>
     <div class="box">
+      <b>Share</b>
+      <p class="mut" style="margin:6px 0">Make a link for your script, recipe or night plan. Anyone who opens it can import it. Your clips are never included.</p>
+      <div class="row"><button class="btn alt" id="sh-script" style="min-height:44px;font-size:.95rem">Script link</button><button class="btn alt" id="sh-recipe" style="min-height:44px;font-size:.95rem">Recipe link</button><button class="btn alt" id="sh-plan" style="min-height:44px;font-size:.95rem">Plan link</button></div>
+      <label>Import a link or code<input type="text" id="sh-in" placeholder="paste here" autocomplete="off" spellcheck="false"></label>
+      <button class="btn alt" id="sh-go" style="min-height:44px;font-size:1rem">Import</button>
+      <div class="mut" id="sh-stat" style="margin-top:8px"></div>
+    </div>
+    <div class="box">
       <b>Backup</b>
       <p class="mut" style="margin:6px 0">Saves settings, favorites, tags, XP, history, records and your script to a file. It does not include your clips (use Drive sync for those).</p>
       <div class="row"><button class="btn alt" id="bk-export" style="min-height:44px;font-size:1rem">Export backup</button><button class="btn alt" id="bk-import" style="min-height:44px;font-size:1rem">Import backup</button></div>
@@ -488,7 +509,7 @@ header#top,main,.ticker{position:relative;z-index:1}
 
 <div id="player">
   <video id="v" muted loop playsinline webkit-playsinline></video>
-  <img id="im" alt="">
+  <img id="im" alt=""><div id="flash"></div>
   <div id="shade"></div><div id="ring"></div><div id="pbar"><i></i></div>
   <div class="top">
     <span class="pill" id="badge">READY</span>
@@ -496,7 +517,7 @@ header#top,main,.ticker{position:relative;z-index:1}
     <span style="display:flex;gap:6px"><button class="pnb" aria-label="Panic">🙈</button><button class="f" id="fail">Fail</button><button id="exit">Exit</button></span>
   </div>
   <div id="say">
-    <h1 id="main"></h1><p id="sub"></p><div id="tm"></div><div class="ctl"><button type="button" id="pausebtn">Pause</button><button type="button" id="skipclip">Next clip</button></div>
+    <h1 id="main"></h1><p id="sub"></p><div id="tm"></div><div class="ctl"><button type="button" id="heartclip" aria-label="Favorite this clip">♡</button><button type="button" id="pausebtn">Pause</button><button type="button" id="skipclip">Next clip</button></div>
     <div id="acts"><button id="pass" style="background:#00ff88;color:#000">Stage done</button><button id="nofail" style="background:#ff3366;color:#fff">Failed</button></div>
   </div>
   <div id="sheet"><div class="box"><h2 id="sh-t"></h2><p id="sh-d" class="mut"></p><button class="btn" id="sh-b">OK</button></div></div>
@@ -510,14 +531,22 @@ header#top,main,.ticker{position:relative;z-index:1}
 <div id="dlg" class="ov2"><div class="box"><h2 id="dg-t"></h2><p class="mut" id="dg-m" style="text-align:center"></p><input type="text" id="dg-in" style="display:none;margin-top:10px" autocomplete="off"><div class="row"><button class="btn alt" id="dg-no" style="margin-bottom:0">Cancel</button><button class="btn" id="dg-ok" style="margin-bottom:0">OK</button></div></div></div>
 <div id="cp" class="ov2"><div class="box"><input type="text" id="cp-in" placeholder="Search clips, start a mode, jump anywhere..." autocomplete="off" spellcheck="false"><div id="cp-list"></div></div></div>
 <div id="toast"></div>
-<div id="recap" class="ov2"><div class="box"><h2 id="rc-t">Session recap</h2><div id="rc-b"></div><button class="btn" id="rc-ok">Done</button></div></div>
-<div id="wn" class="ov2" style="display:none"><div class="box"><h2>JOI HUB 3.0</h2>
-  <div class="rcrow"><span>New layout</span><b>App-style navigation, wide desktop view</b></div>
-  <div class="rcrow"><span>Command bar</span><b>Ctrl+K or the search icon</b></div>
-  <div class="rcrow"><span>Campaign</span><b>7 missions with XP rewards</b></div>
-  <div class="rcrow"><span>Rewards</span><b>Unlock themes as you level</b></div>
-  <div class="rcrow"><span>Profile</span><b>Your name and a greeting</b></div>
-  <div class="rcrow"><span>Polish</span><b>Proper dialogs, notifications, settings jump bar</b></div>
+<div id="plan" class="ov2"><div class="box"><h2>Night plan</h2>
+  <p class="mut" style="text-align:center;margin-bottom:8px">Chain sessions and visual interludes into one flowing night.</p>
+  <div class="chips" id="pl-tpl" style="flex-wrap:wrap"></div><div id="pl-list"></div>
+  <label>Add a session<select id="pl-s"></select></label><button class="btn alt" id="pl-adds" style="min-height:44px;font-size:1rem">Add session</button>
+  <label>Add a visual interlude<select id="pl-v"></select></label>
+  <label>Length<select id="pl-sec"><option value="60">1 minute</option><option value="120" selected>2 minutes</option><option value="180">3 minutes</option><option value="300">5 minutes</option></select></label>
+  <button class="btn alt" id="pl-addv" style="min-height:44px;font-size:1rem">Add interlude</button>
+  <div class="row"><button class="btn alt" id="pl-close">Close</button><button class="btn" id="pl-go">Start plan</button></div></div></div>
+<div id="recap" class="ov2"><div class="box"><h2 id="rc-t">Session recap</h2><div id="rc-b"></div><button class="btn" id="rc-ok">Done</button><button class="btn alt" id="rc-stop" style="display:none">Stop plan</button></div></div>
+<div id="wn" class="ov2" style="display:none"><div class="box"><h2>JOI HUB 4.0</h2>
+  <div class="rcrow"><span>Beat engine</span><b>Pulses and cuts locked to the BPM</b></div>
+  <div class="rcrow"><span>Adaptive soundtrack</span><b>Music that follows every phase</b></div>
+  <div class="rcrow"><span>Mixes</span><b>Smart playlists made from your taste</b></div>
+  <div class="rcrow"><span>Night plan</span><b>Chain a whole evening together</b></div>
+  <div class="rcrow"><span>Share links</span><b>Send scripts, recipes and plans</b></div>
+  <div class="rcrow"><span>Session extras</span><b>Heart a clip, kinetic text</b></div>
   <button class="btn" id="wn-ok">Let's go</button></div></div>
 <div id="panic"><h1 id="pn-t">Meeting notes</h1><p>Agenda for Thursday: review the quarterly numbers, confirm the schedule for the next sprint, and follow up on open action items from last week.</p><p>Action items: send the updated draft to the team, book the room for the planning session, and collect feedback before the next review.</p><p>Next steps: circulate the summary, check in on blockers, and update the shared document.</p></div>
 <div id="lock"><div class="logo" style="font-size:2.4rem">JOI<span>HUB</span></div><span class="age">LOCKED</span><input type="password" inputmode="numeric" id="lk-in" autocomplete="off" placeholder="PIN"><button class="btn" id="lk-go" style="max-width:240px">Unlock</button><div class="mut" id="lk-err" style="color:#ff3366"></div></div>
@@ -546,7 +575,7 @@ const DEFAULT_SCRIPT={
   forfeits:[{title:"Forfeit",desc:"Session over. Take a cold shower."},{title:"Forfeit",desc:"Session over. Walk away for ten minutes."}]
 };
 let script=LS.get("script",null)||DEFAULT_SCRIPT;
-const opt=Object.assign({metro:true,voice:false,wake:true,glow:true,amb:true,beat:true,haptic:false,vol:.6,ui:true,reel:!matchMedia("(pointer:coarse)").matches,msound:"beat",mvol:.5,engine:"browser",kvoice:"af_nicole",kspeed:.85,kdeep:1,ekey:"",evoice:"",evid:"",emodel:"eleven_flash_v2_5",estab:.5,elive:false,perf:"balanced",rounds:1,len:1,theme:"neon",accent:""},LS.get("opt",{}));
+const opt=Object.assign({metro:true,voice:false,wake:true,glow:true,amb:true,beat:true,haptic:false,vol:.6,ui:true,reel:!matchMedia("(pointer:coarse)").matches,msound:"beat",mvol:.5,engine:"browser",kvoice:"af_nicole",kspeed:.85,kdeep:1,ekey:"",evoice:"",evid:"",emodel:"eleven_flash_v2_5",estab:.5,elive:false,perf:"balanced",ost:"on",beatfx:"full",smart:true,rounds:1,len:1,theme:"neon",accent:""},LS.get("opt",{}));
 
 /* ---------- storage (IndexedDB) ---------- */
 const dbp=new Promise((res,rej)=>{const r=indexedDB.open("joi",2);r.onupgradeneeded=()=>{const d=r.result;for(const n of ["m","t"])if(!d.objectStoreNames.contains(n))d.createObjectStore(n,{keyPath:"id"})};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});
@@ -575,7 +604,7 @@ const mm=id=>meta[id]||DEF,mget=id=>meta[id]||(meta[id]={fav:0,tags:[],plays:0,l
 const msave=()=>{clearTimeout(msT);msT=setTimeout(()=>LS.set("meta",meta),600)};
 function seen(it){if(seenNow.has(it.id))return;seenNow.add(it.id);const m=mget(it.id);m.plays++;m.last=Date.now();msave()}
 const allTags=()=>[...new Set(items.flatMap(i=>mm(i.id).tags))].sort();
-function poolFor(f){return items.filter(i=>f==="all"||(f==="fav"?mm(i.id).fav:f.startsWith("tag:")?mm(i.id).tags.includes(f.slice(4)):i.folder===f))}
+function poolFor(f){if(f.startsWith("mix:")){const m=MIXES.find(x=>x.id===f.slice(4));return m?m.f():[]}return items.filter(i=>f==="all"||(f==="fav"?mm(i.id).fav:f.startsWith("tag:")?mm(i.id).tags.includes(f.slice(4)):i.folder===f))}
 const lab=f=>f==="fav"?"★ Favorites":f.startsWith("tag:")?"#"+f.slice(4):f;
 const used=new Set(),go=v=>document.querySelector('#nav button[data-v="'+v+'"]').click();
 const DMODES=["standard","escalation","roulette","gauntlet","slowburn","speedrun","ladder"];
@@ -633,7 +662,7 @@ function renderHome(){
   dc.className="dc";dc.innerHTML='<small>Daily challenge</small><b></b><div class="mut"></div><button class="btn" type="button" style="min-height:48px;font-size:1.1rem"></button>';
   dc.querySelector("b").textContent=dl;
   dc.querySelector(".mut").textContent=dq.done?"Completed today. Come back tomorrow.":"Finish this mode today for +75 bonus XP.";
-  const db1=dc.querySelector("button");db1.textContent=dq.done?"Play again":"Accept";db1.onclick=()=>quick(dq.mode);box.append(dc);campCard(box);
+  const db1=dc.querySelector("button");db1.textContent=dq.done?"Play again":"Accept";db1.onclick=()=>quick(dq.mode);box.append(dc);campCard(box);planCard(box);mixRow(box);
   const favs=poolFor("fav"),qs=document.createElement("div");qs.className="qs";
   const Q=[["🎲","Surprise me",()=>quick(pick(DMODES))],["📹","Camcorder",()=>quick(null,"cam")],["🚀","Overdrive wall",()=>quick(null,"overdrive")],favs.length?["★","Favorites session",()=>quick("standard",null,"fav")]:["🌀","Hypno swirl",()=>quick(null,"hypno")]];
   Q.forEach(([e,t,f])=>{const b=document.createElement("button");b.type="button";b.className="qb";b.innerHTML="<em></em>";b.firstChild.textContent=e;b.append(t);b.onclick=f;qs.append(b)});
@@ -658,6 +687,7 @@ function renderLib(){
     f.add(new Option(`All clips (${items.length})`,"all"));
     folders().forEach(n=>f.add(new Option(`${n} (${items.filter(i=>i.folder===n).length})`,n)));
     f.add(new Option(`★ Favorites (${poolFor("fav").length})`,"fav"));allTags().forEach(t=>f.add(new Option(`#${t} (${poolFor("tag:"+t).length})`,"tag:"+t)));
+    MIXES.forEach(m=>{const c=m.f().length;if(c)f.add(new Option(`✦ ${m.n} (${c})`,"mix:"+m.id))});
     if([...f.options].some(o=>o.value===cur))f.value=cur;
   }
   $("#status").textContent=items.length?"":"Add some media in the Library tab first.";
@@ -859,10 +889,11 @@ function hat(t){
 }
 function beatTick(){
   if(!ac)return;if(ac.state==="suspended")ac.resume();
+  if(S&&opt.beatfx!=="off")beatFx();if(OST.on)ostBeat();
   if(opt.metro){if(opt.msound==="click")click();else{const t=ac.currentTime;kick(t);hat(t+30/bpmNow)}}
   if(opt.haptic&&navigator.vibrate)navigator.vibrate(22);
 }
-function setBpm(n){clearInterval(metro);metro=null;bpmNow=n;if(n>0&&(opt.metro||opt.haptic))metro=setInterval(beatTick,60000/n)}
+function setBpm(n){clearInterval(metro);metro=null;bpmNow=n;if(n>0&&(opt.metro||opt.haptic||opt.beatfx!=="off"||OST.on))metro=setInterval(beatTick,60000/n)}
 function speak(t){
   if(!opt.voice)return;
   if(opt.engine==="elevenlabs"&&opt.ekey){eSay(t);return}
@@ -876,13 +907,14 @@ function mkBag(arr){
   const refill=()=>{q=[...arr];for(let i=q.length-1;i>0;i--){const j=rnd(0,i);[q[i],q[j]]=[q[j],q[i]]}};
   return{next(ex){
     ex=ex||[];
-    for(let t=0;t<arr.length*2+2;t++){
+    for(let t=0;t<arr.length*3+3;t++){
       if(!q.length)refill();
       const it=q.pop();
       if(arr.length===1||(it!==last&&!ex.includes(it))){last=it;return it}
       q.unshift(it);
     }
-    return arr[rnd(0,arr.length-1)];
+    const ok=arr.filter(x=>!ex.includes(x)&&x!==last),ok2=ok.length?ok:arr.filter(x=>!ex.includes(x)),L=ok2.length?ok2:arr,it=L[rnd(0,L.length-1)];
+    last=it;return it;
   }};
 }
 
@@ -890,7 +922,7 @@ function mkBag(arr){
 let pool=[],last=null,curUrl=null;
 function showClip(){
   if(!pool.length)return;
-  const it=S&&S.bag?S.bag.next():pool[0];last=it;seen(it);
+  const it=S&&S.bag?S.bag.next():pool[0];last=it;seen(it);if(S)S.lastCut=Date.now();{const hb=$("#heartclip");if(hb)hb.textContent=mm(it.id).fav?"♥":"♡"}
   if(curUrl)URL.revokeObjectURL(curUrl);
   curUrl=URL.createObjectURL(it.blob);
   const v=$("#v"),im=$("#im");
@@ -926,7 +958,7 @@ async function startSession(){
   const m=$("#mode").value;let steps=null;
   if(m==="custom"){try{steps=parseRecipe(LS.get("recipe",DEFAULT_RECIPE))}catch(e){$("#status").textContent="Your custom recipe has a problem: "+e.message;return}}
   ac=ac||new (window.AudioContext||window.webkitAudioContext)();if(ac.state==="suspended")ac.resume();
-  S={bag:mkBag(pool),mode:m,n:0,fails:0,t:null,hud:null,sec:0,start:Date.now(),t0:Date.now(),st:null,bpm:60,over:false,steps,clean:false};
+  S={bag:mkBag(smartArr(pool)),mode:m,n:0,fails:0,t:null,hud:null,sec:0,start:Date.now(),t0:Date.now(),st:null,bpm:60,over:false,steps,clean:false};
   S.total=steps?steps.length:UNSCALED.includes(m)?MODE_TOTAL[m]:Math.max(4,Math.round(MODE_TOTAL[m]*opt.rounds));
   if(m==="duel"){
     const a=((await ask("Player 1","What's your name?",{input:"Player 1",ok:"Next"}))||"Player 1").slice(0,16),b=((await ask("Player 2","And yours?",{input:"Player 2",ok:"Start"}))||"Player 2").slice(0,16);
@@ -935,7 +967,7 @@ async function startSession(){
   $("#fail").textContent=ENDLESS.includes(m)?"Tap out":"Fail";$("#pausebtn").textContent="Pause";
   heroStop();musicPlay();$("#player").classList.add("on");$("#sheet").classList.remove("on");
   if(opt.wake&&navigator.wakeLock)navigator.wakeLock.request("screen").then(w=>wake=w).catch(()=>{});
-  S.hud=setInterval(hud,1000);next();
+  ostStart();S.hud=setInterval(hud,1000);next();
 }
 function nextState(){
   const m=S.mode;
@@ -968,7 +1000,7 @@ function next(){
   }
   let main=cmd.main,sub=cmd.sub,say=null;
   if(nnn){const c=script.nnn[(S.n-1)%script.nnn.length];main=`Stage ${S.n}: ${c.main}`;sub=c.sub;say=c.main+(c.sub?". "+c.sub:"");bpm=0}
-  S.curBpm=bpm;render(st,main,sub,st.toUpperCase()+(bpm?` · ${bpm} BPM`:""));
+  S.curBpm=bpm;ostLevel(st==="red"?.08:st==="yellow"?.4:st==="warmup"?.22:Math.min(1,.55+bpm/480));render(st,main,sub,st.toUpperCase()+(bpm?` · ${bpm} BPM`:""));
   setBpm(bpm);showClip();speak(say||main+(sub?". "+sub:""));
   $("#acts").style.display=nnn?"flex":"none";
   if(nnn){$("#tm").textContent="";hud();return}
@@ -990,13 +1022,13 @@ function hud(){
 }
 function render(st,main,sub,badge){
   $("#player").className="on s-"+st+(S&&S.clean?" clean":"");
-  S.badgeText=badge;$("#badge").textContent=badge;$("#main").textContent=main;$("#sub").textContent=sub;
+  S.badgeText=badge;$("#badge").textContent=badge;kinetic(main);$("#sub").textContent=sub;
   $("#prog").textContent=S.total>999?"Round "+S.n:`${Math.min(S.n,S.total)}/${S.total}`;
   $("#ring").style.setProperty("--c","");
   $("#pbar i").style.width=(S.total>999?0:Math.min(S.n,S.total)/S.total*100)+"%";
 }
 function finish(){
-  clearInterval(S.t);clearInterval(S.hud);setBpm(0);S.over=true;S.done=true;
+  clearInterval(S.t);clearInterval(S.hud);setBpm(0);S.over=true;S.done=true;ostFinish();
   const f=script.finish,e=Math.floor((Date.now()-S.start)/1000);
   render("done",f.main,f.sub,"DONE");
   $("#tm").textContent="";$("#acts").style.display="none";speak(f.main+(f.sub?". "+f.sub:""));
@@ -1030,7 +1062,7 @@ function duelNext(){
 function sheet(t,d,cb){$("#sh-t").textContent=t;$("#sh-d").textContent=d;$("#sh-b").onclick=cb;$("#sheet").classList.add("on")}
 function end(quiet){
   if(!S)return;
-  clearInterval(S.t);clearInterval(S.hud);setBpm(0);speechSynthesis&&speechSynthesis.cancel&&speechSynthesis.cancel();stopTts();musicStop();
+  clearInterval(S.t);clearInterval(S.hud);setBpm(0);speechSynthesis&&speechSynthesis.cancel&&speechSynthesis.cancel();stopTts();musicStop();ostStop();
   const m=S.mode,secs=Math.floor((Date.now()-S.t0)/1000),L0=lvl(prof.xp),endless=ENDLESS.includes(m);
   const day=new Date().toLocaleDateString("en-CA"),yday=new Date(Date.now()-864e5).toLocaleDateString("en-CA"),sk=LS.get("streak",{n:0,last:""});
   let bonus=0,notes=[];
@@ -1068,6 +1100,7 @@ function end(quiet){
   if(!quiet)recap({rows,L0,L1});
 }
 function recap(r){
+  {const nx=PLAN.on?PLAN.steps[PLAN.i+1]:null;$("#rc-ok").textContent=PLAN.on?(nx?"Next: "+stepName(nx):"Finish plan"):"Done";$("#rc-stop").style.display=PLAN.on?"block":"none"}
   const R=RANKS[Math.min(Math.floor((r.L1-1)/2),RANKS.length-1)],up=r.L1>r.L0,rk=up&&Math.floor((r.L1-1)/2)>Math.floor((r.L0-1)/2);
   $("#rc-t").textContent=rk?"Rank up: "+R[0]:up?"Level up: "+r.L1:"Session recap";
   $("#rc-t").style.color=up?R[1]:"";
@@ -1075,16 +1108,17 @@ function recap(r){
   r.rows.forEach(([k,v])=>{const d=document.createElement("div"),a=document.createElement("span"),c=document.createElement("b");d.className="rcrow";a.textContent=k;c.textContent=v;d.append(a,c);b.append(d)});
   $("#recap").className="ov2 on"+(up?" pop":"");
 }
-$("#rc-ok").onclick=()=>{$("#recap").className="ov2";renderRewards()};
+$("#rc-ok").onclick=()=>{$("#recap").className="ov2";renderRewards();if(PLAN.on)planNext()};
+$("#rc-stop").onclick=()=>{planCancel();$("#recap").className="ov2"};
 $("#pausebtn").onclick=()=>{
   if(!S||S.over)return;
   if(!S.paused){
     S.paused=true;S.pAt=Date.now();clearInterval(S.t);clearInterval(S.hud);setBpm(0);
-    $("#v").pause();if(musEl)musEl.pause();stopTts();
+    $("#v").pause();if(musEl)musEl.pause();stopTts();if(OST.on)OST.out.gain.setTargetAtTime(0,ac.currentTime,.1);
     $("#pausebtn").textContent="Resume";$("#badge").textContent="PAUSED";
   }else{
     const d=Date.now()-S.pAt;S.start+=d;S.t0+=d;S.paused=false;
-    $("#v").play().catch(()=>{});if(musEl)musEl.play().catch(()=>{});
+    $("#v").play().catch(()=>{});if(musEl)musEl.play().catch(()=>{});ostLevel(OST.i);
     $("#pausebtn").textContent="Pause";$("#badge").textContent=S.badgeText||"";
     if(!NNN_MODES.includes(S.mode))S.t=setInterval(()=>{S.sec--;tick();if(S.sec<=0)next()},1000);
     S.hud=setInterval(hud,1000);setBpm(S.curBpm||0);
@@ -1100,7 +1134,7 @@ document.addEventListener("keydown",e=>{if(!S)return;if(e.key==="f"||e.key==="F"
 document.addEventListener("visibilitychange",()=>{if(S&&!document.hidden&&opt.wake&&navigator.wakeLock&&!wake)navigator.wakeLock.request("screen").then(w=>wake=w).catch(()=>{});if(S&&document.hidden)$("#v").pause();else if(S&&!S.over)$("#v").play().catch(()=>{})});
 
 /* ---------- settings ---------- */
-["metro","voice","wake","glow","amb","beat","haptic","ui","reel"].forEach(k=>{const c=$("#o-"+k);c.checked=opt[k];c.onchange=()=>{opt[k]=c.checked;LS.set("opt",opt)}});
+["metro","voice","wake","glow","amb","beat","haptic","ui","reel","smart"].forEach(k=>{const c=$("#o-"+k);c.checked=opt[k];c.onchange=()=>{opt[k]=c.checked;LS.set("opt",opt)}});
 const THEMES={neon:["#ff0a78","#ffc400","#b0002f"],ember:["#ff5a1f","#ffd23f","#c1121f"],ocean:["#00b4ff","#00ffd5","#3a2bff"],toxic:["#7dff00","#00ffa6","#00a86b"],mono:["#e8e8e8","#9aa0a6","#555555"]};
 function applyTheme(){const t=THEMES[opt.theme]||THEMES.neon,r=document.documentElement.style;r.setProperty("--pink",opt.accent||t[0]);r.setProperty("--cyan",t[1]);r.setProperty("--vio",t[2])}
 for(const [k,id] of [["rounds","#o-rounds"],["len","#o-len"],["theme","#o-theme"]]){const el=$(id);el.value=String(opt[k]);el.onchange=()=>{opt[k]=k==="theme"?el.value:+el.value;LS.set("opt",opt);applyTheme()}}
@@ -1160,7 +1194,7 @@ function vStart(){
   if(!p.length){$("#vstatus").textContent="No media in this folder yet.";return}
   $("#vstatus").textContent="";
   const fx=FX[$("#vmode").value];
-  V={fx,pool:p,bag:mkBag(p),cap:(+$("#vcap").value)||(matchMedia("(pointer:coarse)").matches?4:8),auto:!(+$("#vcap").value),asp:"r45",li:0,last:null};
+  V={fx,pool:p,bag:mkBag(smartArr(p)),cap:(+$("#vcap").value)||(matchMedia("(pointer:coarse)").matches?4:8),auto:!(+$("#vcap").value),asp:"r45",li:0,last:null};
   heroStop();musicPlay();$("#vp").classList.add("on");
   $("#aspects").style.display=fx.grid?"none":"flex";
   $("#nextlay").style.display=fx.grid?"block":"none";$("#shuf").style.display=fx.grid?"block":"none";
@@ -1322,7 +1356,7 @@ function wallWatch(){
 $("#stage").addEventListener("pointerdown",()=>{document.querySelectorAll("#stage video").forEach(v=>{if(v.paused)v.play().catch(()=>{})})});
 document.addEventListener("visibilitychange",()=>{if(V&&!document.hidden)document.querySelectorAll("#stage video").forEach(v=>{if(v.paused)v.play().catch(()=>{})})});
 $("#vgo").onclick=vStart;
-$("#vexit").onclick=vStop;
+$("#vexit").onclick=()=>{planCancel();vStop()};
 $("#nextlay").onclick=()=>{if(V){V.li++;wallBuild()}};
 $("#shuf").onclick=()=>swapAll();
 $("#aspects").onclick=e=>{const b=e.target.closest("button");if(b&&V&&V.fr){V.asp=b.dataset.a;V.fr.className="frame "+V.asp}};
@@ -1626,7 +1660,7 @@ function renderStats(){
 /* panic */
 let panicTaps=[];
 function panic(){
-  if(S)end(true);if(V)vStop();
+  planCancel();if(S)end(true);if(V)vStop();
   stopTts();musicStop();document.querySelectorAll("video").forEach(v=>v.pause());
   if(ac&&ac.state==="running")ac.suspend();
   $("#recap").className="ov2";$("#panic").style.display="block";document.title="Meeting notes";
@@ -1679,8 +1713,8 @@ $("#recipe-save").onclick=()=>{
 };
 const applyPerf=()=>document.body.classList.toggle("lite",opt.perf==="light");
 $("#o-perf").value=opt.perf;$("#o-perf").onchange=e=>{opt.perf=e.target.value;LS.set("opt",opt);applyPerf()};applyPerf();
-function showNew(){if(LS.get("ver","")!=="3.0")$("#wn").style.display="flex"}
-$("#wn-ok").onclick=()=>{LS.set("ver","3.0");$("#wn").style.display="none"};
+function showNew(){if(LS.get("ver","")!=="4.0")$("#wn").style.display="flex"}
+$("#wn-ok").onclick=()=>{LS.set("ver","4.0");$("#wn").style.display="none"};
 {const a=$("#ientr").onclick,b=$("#iquiet").onclick;$("#ientr").onclick=()=>{a();showNew()};$("#iquiet").onclick=()=>{b();showNew()}}
 /* session gestures: tap hides the UI, swipe skips the clip */
 let gx=null;
@@ -1805,6 +1839,195 @@ renderRewards();
 
 $("#lq").oninput=()=>{clearTimeout(lqT);lqT=setTimeout(()=>{shown=60;renderLib()},200)};
 $("#lsort").onchange=()=>{shown=60;renderLib()};
+
+/* ---------- 4.0: beat engine, adaptive soundtrack, mixes, night plan, packs ---------- */
+function kinetic(text){const h=$("#main");h.textContent="";String(text).split(" ").forEach((w,i)=>{const sp=document.createElement("span");sp.textContent=w+" ";sp.style.animationDelay=i*70+"ms";h.append(sp)})}
+function beatFx(){
+  if(calm||!S||S.over||S.paused)return;
+  S.bn=(S.bn||0)+1;
+  const per=Math.min(420,60000/(bpmNow||90)*.85),down=S.bn%4===1;
+  [$("#v"),$("#im")].forEach(el=>{if(el.style.display!=="none")el.animate([{transform:`scale(${down?1.08:1.035})`},{transform:"scale(1)"}],{duration:per,easing:"ease-out"})});
+  $("#ring").animate([{opacity:1},{opacity:.4}],{duration:per});
+  if(down)$("#main").animate([{transform:"scale(1.05)"},{transform:"scale(1)"}],{duration:per});
+  if(opt.beatfx==="full"&&!NNN_MODES.includes(S.mode)&&S.st!=="red"){
+    const every=S.st==="green"?8:16;
+    if(S.bn%every===0&&Date.now()-(S.lastCut||0)>2200){showClip();$("#flash").animate([{opacity:.4},{opacity:0}],{duration:220})}
+  }
+}
+$("#heartclip").onclick=()=>{if(!S||!last)return;const m=mget(last.id);m.fav=m.fav?0:1;msave();$("#heartclip").textContent=m.fav?"♥":"♡";toast(m.fav?"Added to favorites":"Removed from favorites")};
+/* adaptive soundtrack: generated live, follows the phase */
+let OST={on:false};
+const CHORDS=[[110,164.81,220,329.63],[87.31,130.81,174.61,220],[130.81,196,261.63,329.63],[98,146.83,196,246.94]];
+function ostStart(){
+  if(OST.on||opt.ost==="off"||!ac)return;
+  const lv=opt.ost==="low"?.5:1,out=ac.createGain(),lp=ac.createBiquadFilter();
+  out.gain.value=0;lp.type="lowpass";lp.frequency.value=400;lp.Q.value=3;lp.connect(out);out.connect(ac.destination);
+  const oscs=CHORDS[0].map((f,i)=>{const o=ac.createOscillator(),g=ac.createGain();o.type=i%2?"sawtooth":"triangle";o.frequency.value=f;o.detune.value=(i-1.5)*6;g.gain.value=.22;o.connect(g);g.connect(lp);o.start();return o});
+  const bass=ac.createOscillator(),bg=ac.createGain();bass.type="sine";bass.frequency.value=CHORDS[0][0]/2;bg.gain.value=0;bass.connect(bg);bg.connect(out);bass.start();
+  OST={on:true,out,lp,oscs,bass,bg,lv,ci:0,i:.3};
+  OST.cyc=setInterval(()=>{OST.ci=(OST.ci+1)%4;const c=CHORDS[OST.ci],t=ac.currentTime;OST.oscs.forEach((o,i)=>o.frequency.setTargetAtTime(c[i],t,1.2));OST.bass.frequency.setTargetAtTime(c[0]/2,t,.8)},9000);
+  ostLevel(.3);
+}
+function ostLevel(x){if(!OST.on)return;OST.i=x;const t=ac.currentTime;OST.lp.frequency.setTargetAtTime(250+x*2600,t,.8);OST.out.gain.setTargetAtTime((.015+x*.075)*OST.lv,t,.6)}
+function ostBeat(){if(!OST.on)return;const t=ac.currentTime,g=OST.bg.gain;g.cancelScheduledValues(t);g.setValueAtTime(0,t);g.linearRampToValueAtTime(.55*OST.lv*(.4+OST.i),t+.01);g.exponentialRampToValueAtTime(.001,t+.28)}
+function ostFinish(){if(!OST.on)return;const t=ac.currentTime;OST.lp.frequency.cancelScheduledValues(t);OST.lp.frequency.setValueAtTime(Math.max(50,OST.lp.frequency.value),t);OST.lp.frequency.exponentialRampToValueAtTime(5200,t+4);OST.out.gain.setTargetAtTime(.12*OST.lv,t,1.5)}
+function ostStop(){
+  if(!OST.on)return;const o=OST;OST={on:false};clearInterval(o.cyc);
+  o.out.gain.setTargetAtTime(0,ac.currentTime,.4);
+  setTimeout(()=>{[...o.oscs,o.bass].forEach(x=>{try{x.stop()}catch(e){}});try{o.out.disconnect()}catch(e){}},1600);
+}
+$("#o-ost").value=opt.ost;$("#o-beatfx").value=opt.beatfx;
+$("#o-ost").onchange=e=>{opt.ost=e.target.value;LS.set("opt",opt)};$("#o-beatfx").onchange=e=>{opt.beatfx=e.target.value;LS.set("opt",opt)};
+/* taste engine and mixes */
+function tagWeights(){const w={};items.forEach(i=>{const m=mm(i.id);m.tags.forEach(t=>w[t]=(w[t]||0)+(m.fav?3:0)+Math.min(m.plays,5))});return w}
+function smartArr(pl){
+  if(!opt.smart)return pl;const w=tagWeights();
+  return pl.flatMap(i=>{const m=mm(i.id),k=1+(m.fav?2:0)+(m.plays?0:1)+(m.tags.some(t=>(w[t]||0)>=3)?1:0);return Array(Math.min(4,k)).fill(i)});
+}
+function tasteMix(){
+  const w=tagWeights();if(!Object.keys(w).length&&!items.some(i=>mm(i.id).fav))return [];
+  const sc=i=>{const m=mm(i.id);return (m.fav?3:0)+m.tags.reduce((a,t)=>a+(w[t]||0),0)+(m.plays?0:1)};
+  return [...items].sort((a,b)=>sc(b)-sc(a)).slice(0,Math.max(6,Math.ceil(items.length*.35)));
+}
+const durOf=i=>{const t=thumbs.get(i.id);return t?t.dur:0};
+const MIXES=[
+  {id:"taste",n:"Made for you",e:"💘",f:tasteMix},
+  {id:"fav",n:"Favorites mix",e:"★",f:()=>items.filter(i=>mm(i.id).fav)},
+  {id:"fresh",n:"Fresh finds",e:"✨",f:()=>items.filter(i=>!mm(i.id).plays)},
+  {id:"deep",n:"Deep cuts",e:"💎",f:()=>items.filter(i=>mm(i.id).plays).sort((a,b)=>mm(a.id).plays-mm(b.id).plays).slice(0,Math.max(6,Math.ceil(items.length/4)))},
+  {id:"quick",n:"Quick hits",e:"⚡",f:()=>items.filter(i=>durOf(i)>0&&durOf(i)<45)},
+  {id:"long",n:"Long form",e:"🎞️",f:()=>items.filter(i=>durOf(i)>180&&durOf(i)<1e5)}
+];
+function mixRow(box){
+  const ms=MIXES.map(m=>({m,l:m.f()})).filter(x=>x.l.length>=1);
+  if(!ms.length)return;
+  const h=document.createElement("div"),r=document.createElement("div");h.className="sub";h.textContent="Your mixes";r.className="rrow";
+  ms.forEach(({m,l})=>{
+    const c=document.createElement("div"),mo=document.createElement("div"),t=document.createElement("b"),sm=document.createElement("small"),row=document.createElement("div"),a=document.createElement("button"),b=document.createElement("button");
+    c.className="mx";mo.className="mo";row.className="row";
+    l.filter(i=>thumbs.has(i.id)).slice(0,4).forEach(i=>{const im=new Image();im.src=thumbs.get(i.id).url;mo.append(im)});
+    t.textContent=m.e+" "+m.n;sm.textContent=l.length+" clips";a.type=b.type="button";a.textContent="Session";b.textContent="Visual";
+    a.onclick=()=>quick($("#mode").value,null,"mix:"+m.id);b.onclick=()=>quick(null,$("#vmode").value,"mix:"+m.id);
+    row.append(a,b);c.append(mo,t,sm,row);r.append(c);
+  });
+  box.append(h,r);
+}
+/* night plan */
+const TEMPL={
+  slow:{n:"Slow burn night",s:[["s","standard"],["v","vip",120],["s","slowburn"],["v","hypno",120],["s","endurance"]]},
+  chaos:{n:"Chaos night",s:[["s","blitz"],["v","overdose",60],["s","roulette"],["v","overdrive",120],["s","gauntlet"]]},
+  sprint:{n:"Sprint",s:[["s","speedrun"],["v","strobeS",60],["s","ladder"]]},
+  marathon:{n:"Marathon",s:[["s","extended"],["v","hypnowall",180],["s","escalation"],["v","cam",180],["s","endurance"]]}
+};
+const PLAN={on:false,i:0,steps:LS.get("plan",[]),vt:null};
+const stepName=st=>{if(st.k==="s")return modeName(st.m);const o=[...$("#vmode").options].find(x=>x.value===st.m);return (o?o.text:st.m)+" · "+Math.round(st.sec/60)+" min"};
+const planSave=()=>LS.set("plan",PLAN.steps);
+[...$("#mode").options].forEach(o=>$("#pl-s").add(new Option(modeName(o.value),o.value)));
+[...$("#vmode").options].forEach(o=>$("#pl-v").add(new Option(o.text,o.value)));
+function planRender(){
+  const tp=$("#pl-tpl");tp.innerHTML="";
+  Object.values(TEMPL).forEach(t=>{const b=document.createElement("button");b.type="button";b.textContent=t.n;b.onclick=()=>{PLAN.steps=t.s.map(x=>x[0]==="s"?{k:"s",m:x[1]}:{k:"v",m:x[1],sec:x[2]});planSave();planRender()};tp.append(b)});
+  const L=$("#pl-list");L.innerHTML="";
+  if(!PLAN.steps.length){const p=document.createElement("p");p.className="mut";p.textContent="No steps yet. Pick a template or add your own.";L.append(p)}
+  PLAN.steps.forEach((st,i)=>{
+    const r=document.createElement("div"),a=document.createElement("span"),x=document.createElement("button");r.className="rcrow";a.textContent=(i+1)+". "+stepName(st);
+    x.type="button";x.textContent="✕";x.style.cssText="min-width:36px;background:none;border:1px solid var(--line);border-radius:8px;color:#ff3366";
+    x.onclick=()=>{PLAN.steps.splice(i,1);planSave();planRender()};r.append(a,x);L.append(r);
+  });
+}
+function planOpen(){planRender();$("#plan").className="ov2 on"}
+$("#pl-adds").onclick=()=>{if(PLAN.steps.length>=20)return;PLAN.steps.push({k:"s",m:$("#pl-s").value});planSave();planRender()};
+$("#pl-addv").onclick=()=>{if(PLAN.steps.length>=20)return;PLAN.steps.push({k:"v",m:$("#pl-v").value,sec:+$("#pl-sec").value});planSave();planRender()};
+$("#pl-close").onclick=()=>{$("#plan").className="ov2";renderHome()};
+$("#pl-go").onclick=()=>{$("#plan").className="ov2";planStart()};
+function planCard(box){
+  const d=document.createElement("div"),n=PLAN.steps.length;d.className="dc";
+  d.innerHTML='<small>Night plan</small><b></b><div class="mut"></div><div class="row"><button class="btn alt" type="button" style="min-height:46px;font-size:1rem">Edit plan</button><button class="btn" type="button" style="min-height:46px;font-size:1rem">Start</button></div>';
+  d.children[1].textContent=n?n+" steps":"Build your night";
+  d.children[2].textContent=n?PLAN.steps.map(stepName).join("  →  "):"Chain sessions and visual interludes into one flowing experience.";
+  const bs=d.querySelectorAll("button");bs[0].onclick=planOpen;bs[1].onclick=()=>n?planStart():planOpen();box.append(d);
+}
+function planStart(){
+  if(!items.length){toast("Add some clips first");return}
+  if(!PLAN.steps.length){planOpen();return}
+  PLAN.on=true;PLAN.i=0;planGo();
+}
+function planGo(){
+  const st=PLAN.steps[PLAN.i];
+  if(!st){planEnd();return}
+  toast("Plan "+(PLAN.i+1)+" of "+PLAN.steps.length+": "+stepName(st));
+  if(st.k==="s")quick(st.m);
+  else{quick(null,st.m);PLAN.vt=setTimeout(()=>{if(V)vStop();planNext()},st.sec*1000)}
+}
+function planNext(){clearTimeout(PLAN.vt);if(!PLAN.on)return;PLAN.i++;planGo()}
+function planCancel(){PLAN.on=false;clearTimeout(PLAN.vt)}
+function planEnd(){PLAN.on=false;prof.xp+=150;LS.set("prof",prof);renderRank();renderHome();toast("Plan complete! +150 XP")}
+/* packs: share a script, recipe or plan as a link */
+async function packEnc(o){
+  const j=JSON.stringify(o),z=!!window.CompressionStream;let b;
+  if(z)b=new Uint8Array(await new Response(new Blob([j]).stream().pipeThrough(new CompressionStream("deflate-raw"))).arrayBuffer());
+  else b=new TextEncoder().encode(j);
+  let bin="";b.forEach(x=>bin+=String.fromCharCode(x));
+  return (z?"z":"p")+btoa(bin).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+}
+async function packDec(c){
+  if(!c||c.length>60000)throw new Error("that code is empty or too large");
+  const f=c[0],t=c.slice(1).replace(/-/g,"+").replace(/_/g,"/"),bin=atob(t+"=".repeat((4-t.length%4)%4)),b=Uint8Array.from(bin,x=>x.charCodeAt(0));
+  const j=f==="z"?await new Response(new Blob([b]).stream().pipeThrough(new DecompressionStream("deflate-raw"))).text():new TextDecoder().decode(b);
+  return JSON.parse(j);
+}
+const cl=(x,n)=>String(x==null?"":x).slice(0,n);
+function cleanScript(sc){
+  const out={};
+  for(const k of ["warmup","green","yellow","red"]){
+    if(!Array.isArray(sc[k])||!sc[k].length)throw new Error('the script is missing "'+k+'"');
+    out[k]=sc[k].slice(0,30).map(x=>({main:cl(x.main,120),sub:cl(x.sub,200),bpm:Array.isArray(x.bpm)&&x.bpm.length===2?[Math.max(0,Math.min(240,+x.bpm[0]||0)),Math.max(0,Math.min(240,+x.bpm[1]||0))]:[0,0]}));
+  }
+  if(!Array.isArray(sc.nnn)||!sc.nnn.length)throw new Error('the script is missing "nnn"');
+  out.nnn=sc.nnn.slice(0,40).map(x=>({main:cl(x.main,120),sub:cl(x.sub,200)}));
+  if(!Array.isArray(sc.forfeits)||!sc.forfeits.length)throw new Error('the script is missing "forfeits"');
+  out.forfeits=sc.forfeits.slice(0,30).map(x=>({title:cl(x.title,80),desc:cl(x.desc,240)}));
+  if(!sc.finish||!sc.finish.main)throw new Error("the script has no finish line");
+  out.finish={main:cl(sc.finish.main,120),sub:cl(sc.finish.sub,200)};
+  return out;
+}
+function cleanPlan(pl){
+  if(!Array.isArray(pl)||!pl.length||pl.length>20)throw new Error("the plan must have 1 to 20 steps");
+  const sm=[...$("#mode").options].map(o=>o.value),vm=Object.keys(FX);
+  return pl.map(x=>{
+    if(x.k==="s"&&sm.includes(x.m))return{k:"s",m:x.m};
+    if(x.k==="v"&&vm.includes(x.m)&&x.sec>=30&&x.sec<=900)return{k:"v",m:x.m,sec:Math.round(x.sec)};
+    throw new Error("the plan has a step this version doesn't know");
+  });
+}
+async function packApply(o){
+  if(!o||o.t!=="pack")throw new Error("this isn't a JOI Hub pack");
+  const inc=[],n={};
+  if(o.script){n.script=cleanScript(o.script);inc.push("script")}
+  if(o.recipe){parseRecipe(String(o.recipe).slice(0,2000));n.recipe=String(o.recipe).slice(0,2000);inc.push("recipe")}
+  if(o.plan){n.plan=cleanPlan(o.plan);inc.push("night plan")}
+  if(!inc.length)throw new Error("this pack is empty");
+  if(!(await ask("Import this pack?","It contains: "+inc.join(", ")+". This replaces your current "+inc.join(", ")+".",{ok:"Import"})))return;
+  if(n.script){script=n.script;LS.set("script",script);$("#script").value=JSON.stringify(script,null,2)}
+  if(n.recipe){LS.set("recipe",n.recipe);$("#recipe").value=n.recipe}
+  if(n.plan){PLAN.steps=n.plan;planSave();renderHome()}
+  toast("Imported: "+inc.join(", "));
+}
+async function shareLink(o){
+  const link=location.origin+location.pathname+"#pack="+await packEnc(Object.assign({t:"pack",v:1},o));
+  try{await navigator.clipboard.writeText(link);toast("Link copied")}catch(e){await ask("Copy this link",link,{input:link,ok:"Close"})}
+}
+$("#sh-script").onclick=()=>shareLink({script});
+$("#sh-recipe").onclick=()=>shareLink({recipe:LS.get("recipe",DEFAULT_RECIPE)});
+$("#sh-plan").onclick=()=>{if(!PLAN.steps.length){toast("Build a night plan first");return}shareLink({plan:PLAN.steps})};
+$("#sh-go").onclick=async()=>{
+  let v=$("#sh-in").value.trim();const k=v.indexOf("#pack=");if(k>=0)v=v.slice(k+6);
+  try{await packApply(await packDec(v));$("#sh-in").value="";$("#sh-stat").textContent=""}catch(e){$("#sh-stat").textContent="Could not import: "+e.message}
+};
+if(location.hash.startsWith("#pack=")){
+  const c=location.hash.slice(6);history.replaceState(null,"",location.pathname+location.search);
+  setTimeout(async()=>{try{await packApply(await packDec(c))}catch(e){toast("That link couldn't be imported: "+e.message)}},1500);
+}
 
 /* ---------- Google Drive sync (runs only after you sign in) ---------- */
 const G={cid:LS.get("gcid",""),tok:null,exp:0,folder:null,busy:false};
